@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# Secrets — never commit. See .env.example for the shape.
+.env
+.env.local
+
+# Tender packs and evidence libraries are real documents belonging to real
+# companies. They are inputs, not source: keep them out of a public repository.
+samples/private/
+*.pdf
+!docs/**/*.pdf
+
+# Generated reports
+out/
