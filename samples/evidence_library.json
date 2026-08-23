@@ -1,0 +1,111 @@
+{
+  "company": "Exemple Numérique SAS",
+  "fictional": true,
+  "_note": "A FICTIONAL French IT services SME. No real company, no real certificate, no real insurance policy. The tender packs this tool reads are real public documents; this library is not, and is not meant to resemble any actual firm. See samples/README.md.",
+  "reference_deadline": "2026-10-09",
+  "_reference_deadline_note": "The submission date these dates were chosen against. Every verdict below is relative to it — change it and the whole demonstration changes. Regenerated when a real tender is picked.",
+  "profile": {
+    "activity": "Custom software development and application maintenance",
+    "headcount": 24,
+    "turnover_last_three_years_eur": [1850000, 2140000, 2390000]
+  },
+  "documents": [
+    {
+      "name": "Extrait Kbis",
+      "issued_on": "2026-08-01",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": "Never expires, but buyers routinely demand one issued less than 3 months ago."
+    },
+    {
+      "name": "Attestation de vigilance URSSAF",
+      "issued_on": "2026-03-10",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": "The document itself never expires. Buyers demand one issued less than 6 months ago — this one is older than that, and will be refused while looking perfectly valid."
+    },
+    {
+      "name": "Attestation de régularité fiscale (DGFiP)",
+      "issued_on": "2026-06-15",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": "Recent enough for the usual 6-month rule."
+    },
+    {
+      "name": "Attestation d'assurance responsabilité civile professionnelle",
+      "issued_on": "2025-10-01",
+      "expires_on": "2026-09-30",
+      "has_expiry": true,
+      "note": "Valid today. Expires nine days before the submission date. This is the case the whole tool exists to catch."
+    },
+    {
+      "name": "Attestation d'assurance responsabilité civile exploitation",
+      "issued_on": "2026-02-01",
+      "expires_on": "2027-01-31",
+      "has_expiry": true,
+      "note": "Comfortably valid."
+    },
+    {
+      "name": "Certificat ISO/IEC 27001",
+      "issued_on": "2023-08-01",
+      "expires_on": "2026-07-31",
+      "has_expiry": true,
+      "note": "Three-year cycle, lapsed last month. Nobody re-reads a folder of forty attestations before every bid."
+    },
+    {
+      "name": "Certificat ISO 9001",
+      "issued_on": "2025-03-15",
+      "expires_on": "2028-03-14",
+      "has_expiry": true,
+      "note": "Valid."
+    },
+    {
+      "name": "Label ExpertCyber",
+      "issued_on": "2024-11-05",
+      "expires_on": null,
+      "has_expiry": true,
+      "note": "Carries an expiry date that could not be read from the document. Not a pass and not a failure — something to go and look at. Reporting this as valid is the failure mode the tool refuses."
+    },
+    {
+      "name": "Bilans et comptes de résultat des trois derniers exercices",
+      "issued_on": "2026-04-30",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": "Proves the turnover thresholds."
+    },
+    {
+      "name": "Liste de références clients 2023-2026",
+      "issued_on": "2026-07-20",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": "Buyers usually ask for the last three years."
+    },
+    {
+      "name": "CV des intervenants pressentis",
+      "issued_on": "2026-07-20",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": null
+    },
+    {
+      "name": "Politique de protection des données personnelles",
+      "issued_on": "2026-01-12",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": "Increasingly demanded as an annex in public IT tenders."
+    },
+    {
+      "name": "Relevé d'identité bancaire",
+      "issued_on": "2025-09-01",
+      "expires_on": null,
+      "has_expiry": false,
+      "note": null
+    }
+  ],
+  "_deliberately_absent": [
+    "Certificat HDS (hébergement de données de santé)",
+    "Qualification SecNumCloud",
+    "Attestation de capacité financière délivrée par un établissement bancaire"
+  ],
+  "_deliberately_absent_note": "Documents a tender may require and this company does not hold. They produce the MISSING rows — a matrix where everything is covered demonstrates nothing."
+}

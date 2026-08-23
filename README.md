@@ -69,6 +69,27 @@ deterministic code:
 The result is a report that can be argued with. Every number can be checked by
 hand, and every assertion points at the page it came from.
 
+## Real tenders, a fabricated evidence library
+
+**The tender packs are real** — public documents from BOAMP and TED, readable by
+anyone. A tool that only works on documents written for it proves nothing.
+
+**The evidence library is invented.** `samples/evidence_library.json` describes a
+company that does not exist, holding certificates that do not exist. No real
+firm's attestations appear anywhere in this repository.
+
+Said plainly because the alternative is worse: a demonstration built on a real
+company's compliance file would publish which of its certificates have lapsed,
+and a reader who later discovered an undisclosed fabrication would be right to
+doubt the rest of the report.
+
+It is also the better engineering choice. The interesting cases are rare in any
+one real folder and are exactly the ones the tool must be shown catching.
+Authoring them makes the demonstration deterministic — the certificate that
+expires nine days before the deadline does so on every machine, every time.
+`tests/test_library.py` asserts each verdict still fires, so the fixture is
+tested like code.
+
 ## Status
 
 Early. This repository was created for the hackathon and starts from zero.
@@ -77,10 +98,17 @@ Early. This repository was created for the hackathon and starts from zero.
 |---|---|
 | `validity.py` — date arithmetic on evidence | implemented, tested |
 | `coverage.py` — the compliance matrix and its counts | implemented, tested |
+| `library.py` — loading a company's evidence library | implemented, tested |
 | `tender.py` — reading a tender pack | not started |
 | `obligations.py` — extracting obligations | not started |
 | `evidence.py` — matching evidence to obligations | not started |
 | `drafting.py` — drafting from proven material only | not started |
+
+Sector chosen for the demonstration: **French public tenders for IT services**
+(CPV 72xxxxxx). Shorter packs than construction, an evidence library that can be
+modelled honestly, and both date rules occur naturally — professional indemnity
+insurance carries an annual expiry, while tax and social-security attestations
+are demanded "less than 6 months old".
 
 ## Quickstart
 
