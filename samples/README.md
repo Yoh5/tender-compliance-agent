@@ -6,6 +6,26 @@
 buyers on BOAMP and TED, and downloadable by anyone. Reading them is the point:
 a tool that only works on documents written for it proves nothing.
 
+### `real_dce/` — two consultation files, committed on purpose
+
+The repository otherwise refuses to hold PDFs (`.gitignore`), because tender
+packs and evidence libraries belong to real firms. These two are the exception
+and the exception is narrow: they are *buyers'* own consultation rules, published
+by the French State and downloadable by anyone without registration.
+
+They are committed because `tests/test_extraction.py` makes a claim about them
+that a reader should be able to check for themselves — that page 13 of
+`rc_ANTAI_2026.pdf` names a mandatory document which no text extractor returns.
+A test asserting that against a file nobody can open is just an assertion.
+
+| File | Role |
+|---|---|
+| `rc_ANTAI_2026.pdf` | the finding: 261 runs of text stored as images |
+| `rc_2026SDCRH05.pdf` | the negative control: 14 pages, nothing hidden |
+
+The second matters as much as the first. Without a file that must *not* be
+flagged, the detector's thresholds would be numbers chosen by taste.
+
 **The evidence library is fabricated.** `evidence_library.json` describes
 *Exemple Numérique SAS*, a company that does not exist, holding certificates
 that do not exist. No real firm's attestations, insurance policies or
