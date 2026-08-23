@@ -95,3 +95,39 @@ def missing_by_design(path: str | Path) -> list[str]:
     """
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
     return list(raw.get("_deliberately_absent", []))
+
+
+def profile(path: str | Path):
+    """The company's own figures, for the requirements answered by numbers.
+
+    ORDER IS REVERSED HERE, ON PURPOSE
+
+    A library is written by a human, and a human lists financial years the way
+    they appear on a balance sheet: oldest first. `capacity.Profile` slices a
+    window off the front, so it wants the most recent year first. Reversing at
+    the boundary means the file stays natural to write and the arithmetic stays
+    correct — and it happens once, here, rather than in whichever caller
+    remembers.
+
+    Getting this backwards is silent: it produces a plausible average from the
+    wrong three years, and no verdict looks obviously wrong.
+    """
+    from tender_compliance.capacity import Profile
+
+    raw = json.loads(Path(path).read_text(encoding="utf-8")).get("profile") or {}
+
+    def newest_first(values):
+        return list(reversed(values)) if values else None
+
+    turnover = newest_first(raw.get("turnover_last_three_years_eur"))
+    headcount = raw.get("headcount")
+
+    return Profile(
+        turnover_by_year=turnover,
+        references_by_year=newest_first(raw.get("references_by_year")),
+        # A single current figure repeated across the window is the honest
+        # reading of "headcount: 24" — it is what the company has now, and the
+        # file says nothing about earlier years.
+        headcount_by_year=[headcount] * 3 if headcount else None,
+        specialists_by_year=newest_first(raw.get("specialists_by_year")),
+    )

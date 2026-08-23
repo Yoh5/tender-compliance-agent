@@ -242,6 +242,26 @@ _DATE_NOTE = {
 }
 
 
+def capacity_row(obligation: Obligation, threshold, company) -> Row:
+    """A row for a requirement answered by a figure rather than a paper.
+
+    `capacity.assess` already decides this; the work here is only to phrase the
+    result as a matrix row, and to keep the evidence column honest — there is no
+    document to cite, so it stays empty and the explanation carries the numbers.
+    """
+    from tender_compliance.capacity import assess as assess_capacity
+
+    verdict = assess_capacity(threshold, company)
+    return Row(
+        requirement=obligation.text,
+        source=obligation.source,
+        stage=obligation.stage,
+        status=verdict.status,
+        evidence=None,
+        note=verdict.explanation,
+    )
+
+
 def to_row(match: Match, deadline: date, *, today: date) -> Row:
     """Turn a match into a matrix row, applying the date rules by arithmetic.
 
@@ -301,6 +321,7 @@ def build(
     *,
     today: date,
     propose: Propose,
+    company=None,
 ) -> list[Row]:
     """The compliance matrix for one tender against one evidence library.
 
@@ -313,11 +334,31 @@ def build(
     returns still goes through `resolve`, which is where the guarantees live,
     so a batching bug can make the tool slower or blinder but never looser.
     """
+    from tender_compliance.capacity import read_threshold
+
+    # A requirement stating a figure is answered by arithmetic, not by searching
+    # a folder. Deciding that here keeps it out of the matcher's prompt as well:
+    # asking a model which attestation proves a turnover of 138 million invites
+    # the confident wrong answer this module exists to refuse.
+    quantified = {}
+    if company is not None:
+        for obligation in obligations:
+            threshold = read_threshold(obligation.text)
+            if threshold is not None:
+                quantified[id(obligation)] = threshold
+
+    to_match = [o for o in obligations if id(o) not in quantified]
+
     prepare = getattr(propose, "prepare", None)
     if prepare is not None:
-        prepare(obligations, library)
+        prepare(to_match, library)
 
-    return [
-        to_row(find(obligation, library, propose), deadline, today=today)
-        for obligation in obligations
-    ]
+    rows = []
+    for obligation in obligations:
+        threshold = quantified.get(id(obligation))
+        if threshold is not None:
+            rows.append(capacity_row(obligation, threshold, company))
+        else:
+            rows.append(to_row(find(obligation, library, propose),
+                               deadline, today=today))
+    return rows

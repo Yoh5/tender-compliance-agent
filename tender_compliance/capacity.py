@@ -43,6 +43,7 @@ NEEDS_REVIEW instead, and says why.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 
@@ -204,3 +205,132 @@ def _render(value: float | None, measure: Measure) -> str:
             return f"{value / 1_000_000:.2f} M€".replace(".", ",")
         return f"{value:,.0f} €".replace(",", " ")
     return f"{value:.0f}".rstrip("0").rstrip(".") if value % 1 else f"{value:.0f}"
+
+
+# ---------------------------------------------------------------------------
+# Reading a threshold out of the buyer's own sentence.
+#
+# The model is not asked for these numbers. "138 000 000" and "3 124 998" decide
+# admissibility, a misread digit is invisible in the output, and the wording is
+# regular enough that a regex is both more accurate and auditable. The model's
+# job upstream is to find the sentence; this reads it.
+# ---------------------------------------------------------------------------
+
+_MEASURE_WORDS = [
+    (Measure.TURNOVER, re.compile(r"chiffre\s+d['’]affaires", re.I)),
+    (Measure.REFERENCES, re.compile(
+        r"(?:liste\s+des\s+principa|r[ée]f[ée]rences?|prestations?\s+comparables|"
+        r"march[ée]s\s+de\s+m[êe]me\s+type)", re.I)),
+    (Measure.SPECIALISTS, re.compile(
+        r"(?:sp[ée]cialis[ée]|qualifi[ée]s?\s+dans)", re.I)),
+    (Measure.HEADCOUNT, re.compile(r"effectifs?", re.I)),
+]
+
+_AMOUNT = re.compile(
+    r"(?:sup[ée]rieur|d['’]au\s+moins|au\s+moins|[ée]gal|atteindre|minimum)"
+    r"[^.\n]{0,40}?"
+    # One digit is enough: "supérieur ou égal à 4" is a real reference
+    # count. Turnover is protected by the sanity floor below instead.
+    r"(?P<number>\d[\d\s\u00a0\u202f.,]*)"
+    r"\s*(?:d['’])?\s*"
+    r"(?P<unit>euros?|€|k€|M€)?",
+    re.IGNORECASE,
+)
+
+_STRICT = re.compile(r"strictement\s+sup[ée]rieur", re.I)
+_INCLUSIVE = re.compile(
+    r"sup[ée]rieur\s+ou\s+[ée]gal|au\s+moins|d['’]au\s+moins|[ée]gal\s+ou\s+sup", re.I)
+
+_WINDOW_WORDS = {
+    "un": 1, "une": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5,
+    "six": 6, "sept": 7, "huit": 8, "neuf": 9, "dix": 10,
+}
+_WINDOW = re.compile(
+    r"(?:(?P<word>\b(?:un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)\b|\d+)"
+    r"\s*(?:\(\s*(?P<digits>\d+)\s*\)\s*)?"
+    r"(?:derni[èe]res?|derniers?)\s+(?:exercices?|ann[ée]es?)"
+    r"|(?P<single>\b(?:du|le|au)\s+dernier\s+exercice\b))",
+    re.IGNORECASE,
+)
+
+_AVERAGE = re.compile(r"\bmoyen(?:ne)?s?\b", re.I)
+_EACH = re.compile(r"chacun\s+des|pour\s+chaque\s+(?:exercice|ann[ée]e)", re.I)
+
+
+def _number(raw: str) -> float | None:
+    """Read "3 124 998" and "1 500 000,50" as numbers.
+
+    French documents separate thousands with spaces — ordinary, non-breaking and
+    narrow no-break — and use a comma for decimals. A parser that assumes the
+    English convention reads 3 124 998 as 3.
+    """
+    cleaned = raw.strip().replace("\u00a0", "").replace("\u202f", "").replace(" ", "")
+    cleaned = cleaned.rstrip(".,")
+    if cleaned.count(",") == 1 and len(cleaned.rsplit(",", 1)[1]) <= 2:
+        cleaned = cleaned.replace(".", "").replace(",", ".")
+    else:
+        cleaned = cleaned.replace(",", "").rstrip(".")
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def read_threshold(text: str) -> Threshold | None:
+    """The quantified requirement stated in this sentence, or None.
+
+    None is the normal answer: most obligations are about paperwork. Returning a
+    Threshold here means the code below will compare numbers, so it is worth
+    being unable to read one rather than reading one wrong.
+    """
+    measure = next((m for m, pattern in _MEASURE_WORDS if pattern.search(text)), None)
+    if measure is None:
+        return None
+
+    amount = _AMOUNT.search(text)
+    if not amount:
+        return None
+    minimum = _number(amount.group("number"))
+    if minimum is None:
+        return None
+
+    unit = (amount.group("unit") or "").lower()
+    if unit in {"k€"}:
+        minimum *= 1_000
+    elif unit in {"m€"}:
+        minimum *= 1_000_000
+
+    # A turnover threshold in single digits is a misread, not a buyer asking for
+    # nine euros of revenue. Refusing beats asserting.
+    if measure is Measure.TURNOVER and minimum < 1_000:
+        return None
+
+    window = 3
+    found = _WINDOW.search(text)
+    if found:
+        if found.group("single"):
+            window = 1
+        elif found.group("digits"):
+            window = int(found.group("digits"))
+        else:
+            word = (found.group("word") or "").lower()
+            window = int(word) if word.isdigit() else _WINDOW_WORDS.get(word, 3)
+
+    if _EACH.search(text):
+        aggregation = Aggregation.EACH
+    elif measure in {Measure.REFERENCES}:
+        aggregation = Aggregation.TOTAL
+    elif _AVERAGE.search(text):
+        aggregation = Aggregation.AVERAGE
+    else:
+        aggregation = Aggregation.AVERAGE
+
+    strict = bool(_STRICT.search(text)) and not _INCLUSIVE.search(text)
+
+    return Threshold(
+        measure=measure,
+        minimum=minimum,
+        window_years=window,
+        aggregation=aggregation,
+        strict=strict,
+    )

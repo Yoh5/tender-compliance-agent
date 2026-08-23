@@ -9,6 +9,7 @@ of obligations at all, and the tests should keep pointing at the evidence.
 import pytest
 
 from tender_compliance.capacity import (
+    read_threshold,
     Aggregation,
     Assessment,
     Measure,
@@ -16,7 +17,20 @@ from tender_compliance.capacity import (
     Threshold,
     assess,
 )
-from tender_compliance.coverage import Status
+from pathlib import Path
+
+from tender_compliance.coverage import Status, check
+from tender_compliance.evidence import build
+from tender_compliance.library import profile
+
+LIBRARY_FILE = Path(__file__).resolve().parent.parent / "samples" / "evidence_library.json"
+TODAY = __import__("datetime").date(2026, 8, 23)
+
+
+@pytest.fixture(scope="module")
+def library_and_deadline():
+    from tender_compliance.library import load
+    return load(LIBRARY_FILE)
 
 # "si x est strictement supérieur à 3 124 998 d'euros HT : 2/2"
 #                                 — Ministère de l'éducation nationale, 22-87951
@@ -168,6 +182,177 @@ def test_every_verdict_is_one_the_matrix_already_knows():
         result = assess(TURNOVER, profile)
         assert isinstance(result, Assessment)
         assert result.status in {Status.COVERED, Status.MISSING, Status.NEEDS_REVIEW}
+
+
+class TestReadingAThresholdOutOfTheBuyersSentence:
+    """Verbatim wording from three buyers. The numbers decide admissibility, a
+    misread digit is invisible in the output, and the phrasing is regular enough
+    that a regex is both more accurate than a model and auditable."""
+
+    def test_the_antai_turnover_floor(self):
+        # "IV.7 MINIMAUX REQUIS", rc_ANTAI_2026.pdf page 13.
+        threshold = read_threshold(
+            "ne retiendra que les candidats, seuls ou en groupement, dont le "
+            "chiffre d'affaires du dernier exercice disponible est supérieur ou "
+            "égal à 138 000 000 euros hors taxe."
+        )
+        assert threshold.measure is Measure.TURNOVER
+        assert threshold.minimum == 138_000_000
+        assert threshold.window_years == 1
+        assert threshold.strict is False
+
+    def test_the_ministry_of_education_grid(self):
+        # 22-87951: three years, averaged, and strictly greater.
+        threshold = read_threshold(
+            "chiffre d'affaires annuel global moyen sur les trois derniers "
+            "exercices disponibles. si x est strictement supérieur à "
+            "3 124 998 d'euros HT : 2/2"
+        )
+        assert threshold.minimum == 3_124_998
+        assert threshold.window_years == 3
+        assert threshold.aggregation is Aggregation.AVERAGE
+        assert threshold.strict is True
+
+    def test_a_reference_count_over_five_years(self):
+        threshold = read_threshold(
+            "Un dossier de références de prestations comparables au titre des "
+            "cinq (5) dernières années. si x est supérieur ou égal à 4: 2/2"
+        )
+        assert threshold.measure is Measure.REFERENCES
+        assert threshold.minimum == 4
+        assert threshold.window_years == 5
+        assert threshold.aggregation is Aggregation.TOTAL
+
+    def test_french_thousands_separators_are_not_decimal_points(self):
+        # Reading "3 124 998" the English way gives 3. The separators in these
+        # documents are ordinary spaces, non-breaking spaces and narrow ones,
+        # sometimes all three in the same file.
+        for spacing in ["3 124 998", "3\u00a0124\u00a0998", "3\u202f124\u202f998"]:
+            threshold = read_threshold(
+                f"chiffre d'affaires supérieur à {spacing} euros")
+            assert threshold.minimum == 3_124_998
+
+    @pytest.mark.parametrize("text", [
+        "Preuve d'une assurance pour les risques professionnels",
+        "Lettre de candidature ou formulaire DC1",
+        "Une déclaration sur l'honneur relative aux motifs d'exclusion",
+    ])
+    def test_paperwork_states_no_threshold(self, text):
+        assert read_threshold(text) is None
+
+    def test_a_requirement_naming_no_figure_is_not_a_threshold(self):
+        # "déclaration concernant le chiffre d'affaires global sur les trois
+        # derniers exercices" asks for a declaration, not a minimum. Inventing a
+        # threshold here would fail a company for a number nobody demanded.
+        assert read_threshold(
+            "déclaration concernant le chiffre d'affaires global et le chiffre "
+            "d'affaires concernant les prestations objet du marché, réalisés au "
+            "cours des trois derniers exercices disponibles"
+        ) is None
+
+    def test_a_turnover_of_nine_euros_is_a_misreading_not_a_requirement(self):
+        # Refusing to read beats reading wrong: the floor is what stops a stray
+        # digit becoming a threshold the whole matrix is judged against.
+        assert read_threshold("chiffre d'affaires supérieur à 9 euros") is None
+
+
+class TestTheCompanyProfileLoads:
+    def test_years_are_reversed_to_most_recent_first(self):
+        # The file lists them as a balance sheet does, oldest first; Profile
+        # slices a window off the front. Getting this backwards is silent — a
+        # plausible average computed from the wrong years.
+        company = profile(LIBRARY_FILE)
+        assert company.turnover_by_year == [2_390_000, 2_140_000, 1_850_000]
+
+    def test_a_single_headcount_fills_the_window(self):
+        company = profile(LIBRARY_FILE)
+        assert company.headcount_by_year == [24, 24, 24]
+
+    def test_a_library_with_no_profile_still_loads(self, tmp_path):
+        path = tmp_path / "library.json"
+        path.write_text('{"reference_deadline": "2026-10-09", '
+                        '"documents": [{"name": "x"}]}', encoding="utf-8")
+        company = profile(path)
+        assert company.turnover_by_year is None
+
+
+class TestQuantifiedRequirementsBypassTheMatcher:
+    """No paper proves a turnover of 138 million. Asking a model which
+    attestation does invites the confident wrong answer."""
+
+    def test_a_threshold_row_is_decided_by_arithmetic(self, library_and_deadline):
+        library, deadline = library_and_deadline
+        company = profile(LIBRARY_FILE)
+        asked = []
+
+        rows = build(
+            [_capacity_obligation()], library, deadline, today=TODAY,
+            propose=lambda o, lib: asked.append(o) or [],
+            company=company,
+        )
+        assert asked == [], "the matcher must not be asked about a figure"
+        assert rows[0].status is Status.MISSING
+        assert "138" in rows[0].note
+
+    def test_the_shortfall_is_stated_as_a_figure(self, library_and_deadline):
+        # "You are short" sends someone into the accounts. A number tells them
+        # immediately whether a subcontractor's turnover could close the gap.
+        library, deadline = library_and_deadline
+        rows = build([_capacity_obligation()], library, deadline, today=TODAY,
+                     propose=lambda o, lib: [], company=profile(LIBRARY_FILE))
+        assert "short by" in rows[0].note
+        assert "M€" in rows[0].note
+
+    def test_it_cites_no_document_because_there_is_none(self, library_and_deadline):
+        library, deadline = library_and_deadline
+        rows = build([_capacity_obligation()], library, deadline, today=TODAY,
+                     propose=lambda o, lib: [], company=profile(LIBRARY_FILE))
+        assert rows[0].evidence is None
+        assert check(rows) == []
+
+    def test_ordinary_paperwork_still_goes_to_the_matcher(self, library_and_deadline):
+        library, deadline = library_and_deadline
+        asked = []
+        build([_paper_obligation()], library, deadline, today=TODAY,
+              propose=lambda o, lib: asked.append(o) or [],
+              company=profile(LIBRARY_FILE))
+        assert len(asked) == 1
+
+    def test_without_a_profile_nothing_is_routed_away(self, library_and_deadline):
+        # A caller that supplies no figures must not silently lose the row.
+        library, deadline = library_and_deadline
+        asked = []
+        rows = build([_capacity_obligation()], library, deadline, today=TODAY,
+                     propose=lambda o, lib: asked.append(o) or [])
+        assert len(asked) == 1
+        assert len(rows) == 1
+
+    def test_the_matrix_keeps_one_row_per_obligation_in_order(self, library_and_deadline):
+        library, deadline = library_and_deadline
+        obligations = [_paper_obligation(), _capacity_obligation(), _paper_obligation()]
+        rows = build(obligations, library, deadline, today=TODAY,
+                     propose=lambda o, lib: [], company=profile(LIBRARY_FILE))
+        assert len(rows) == 3
+        assert [r.requirement for r in rows] == [o.text for o in obligations]
+
+
+def _capacity_obligation():
+    from tender_compliance.coverage import Citation, Stage
+    from tender_compliance.obligations import Obligation
+    return Obligation(
+        text="ne retiendra que les candidats dont le chiffre d'affaires du dernier "
+             "exercice disponible est supérieur ou égal à 138 000 000 euros hors taxe.",
+        source=Citation(document="rc.pdf", page=13), stage=Stage.BID,
+    )
+
+
+def _paper_obligation():
+    from tender_compliance.coverage import Citation, Stage
+    from tender_compliance.obligations import Obligation
+    return Obligation(
+        text="Preuve d'une assurance pour les risques professionnels",
+        source=Citation(document="rc.pdf", page=13), stage=Stage.BID,
+    )
 
 
 if __name__ == "__main__":

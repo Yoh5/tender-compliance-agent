@@ -107,12 +107,20 @@ def analyse(
     propose_obligations: ProposeObligations,
     propose_evidence: ProposeEvidence,
     model: str = "",
+    company=None,
 ) -> Analysis:
-    """Run one consultation file against one evidence library."""
+    """Run one consultation file against one evidence library.
+
+    `company` carries the figures — turnover, headcount, references — that
+    answer the requirements no document can. Without it those requirements fall
+    back to the document matcher, which will not find a paper proving a turnover
+    of 138 million because none exists.
+    """
     found: Extraction = extract(source, propose_obligations)
 
     rows = build_rows(
-        found.obligations, library, deadline, today=today, propose=propose_evidence
+        found.obligations, library, deadline, today=today,
+        propose=propose_evidence, company=company,
     )
 
     problems = check(rows)
@@ -140,29 +148,49 @@ def analyse(
 
 _OBLIGATION_BRIEF = """\
 You are reading a French public-procurement consultation file (règlement de la
-consultation). List every requirement placed on a CANDIDATE — documents,
-declarations, forms, figures they must supply.
+consultation). List the pieces a CANDIDATE must supply to apply.
 
-Rules:
-- Each entry names ONE distinct thing the candidate must supply. Quote it from
-  the page, in French, as written — do not translate or summarise.
-- Do NOT split an item into its own qualifiers. "Formulaire DC1, ou équivalent,
-  dûment rempli et daté" is one entry, not three. Include the qualifiers in the
-  quote.
-- Two genuinely different items listed in one sentence are two entries.
+HOW THESE DOCUMENTS ARE WRITTEN, WHICH DECIDES HOW TO SPLIT
+
+The required pieces are set out as a list: bullets (•, ➢, -, ·) or numbered
+paragraphs (1°, 2°, 3°). ONE LIST ITEM IS ONE ENTRY. Quote the whole item,
+including its qualifiers, its parenthesised links and its conditions.
+
+Right — one entry:
+  "Lettre de candidature ou formulaire DC1 (téléchargeable à partir du lien
+   https://www.economie.gouv.fr/daj/formulaires-declaration-du-candidat) ou
+   équivalent, dûment rempli, et daté"
+
+Wrong — the same item cut into pieces:
+  "Lettre de candidature ou formulaire DC1"
+  "ou équivalent"
+  "dûment rempli, et daté"
+
+Wrong — a sentence that only describes the item above it:
+  "Ces attestations indiquent le montant, la date et le lieu d'exécution"
+  "lors de la transmission de l'acte de candidature"
+Those continue the previous item. They belong inside it, not beside it.
+
+THE REST OF THE RULES
+
+- Quote from the page, in French, as written. Never translate or summarise.
 - Give the page number exactly as marked in the text below.
-- A requirement can be two words ("DC1, DC2"). Include it.
-- Include requirements that apply only in some cases ("en cas de", "le cas
-  échéant"); do not decide whether they apply.
+- An item can be two words ("DC1, DC2"). Include it.
+- Include items that apply only in some cases ("en cas de", "le cas échéant");
+  do not decide whether they apply to this bidder.
+- Include a stated minimum ("chiffre d'affaires supérieur ou égal à
+  138 000 000 euros") as its own entry: it is a requirement even though no
+  document answers it.
 - SKIP rules about how the procedure works — who may bid, how offers are scored,
-  what happens to an incomplete file — unless they require the candidate to
-  supply something.
+  what happens to an incomplete file, how to use the platform — unless they
+  require the candidate to supply something.
 - Skip anything about performing the contract after award rather than applying
   for it, unless you are unsure; when unsure, include it.
-- If a page states no requirement, return nothing for it.
+- A page that lists no required piece returns nothing.
 
-Your quotes are checked against the page text afterwards. A quote that is not
-found there is discarded, so quote rather than paraphrase.
+Ten well-formed entries beat forty fragments: every entry becomes a line
+somebody has to check by hand. Your quotes are verified against the page
+afterwards, so quote rather than paraphrase.
 """
 
 _EVIDENCE_BRIEF = """\

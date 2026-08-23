@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     load_env()
 
     from tender_compliance.extraction import Source, read
-    from tender_compliance.library import load
+    from tender_compliance.library import load, profile
     from tender_compliance.model import ConfigurationError, build, choose
     from tender_compliance.tender import (
         ReportError,
@@ -112,6 +112,7 @@ def main(argv: list[str] | None = None) -> int:
                         pages=[p for p in source.pages if low <= p.number <= high])
 
     library, library_deadline = load(args.library)
+    company = profile(args.library)
     deadline = date.fromisoformat(args.deadline) if args.deadline else library_deadline
     today = date.fromisoformat(args.today) if args.today else date.today()
 
@@ -134,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
             propose_obligations=obligation_proposer(agent_factory),
             propose_evidence=evidence_proposer(agent_factory),
             model=choice.describe(),
+            company=company,
         )
     except ReportError as error:
         print(str(error), file=sys.stderr)

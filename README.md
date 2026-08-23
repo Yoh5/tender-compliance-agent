@@ -50,6 +50,15 @@ must beat.
   paragraph would need a claim no document backs, the claim is flagged, not
   written.
 
+## Architecture
+
+![Architecture](docs/architecture.svg)
+
+Two bands, and the whole argument is that nothing crosses from left to right
+without dropping into the lower one. The model proposes twice — obligations,
+then matching evidence — and each proposal is checked against the document or
+the library before it may continue. Dates and thresholds never reach it at all.
+
 ## The rule that shapes the architecture
 
 **The model observes, the code decides.**
