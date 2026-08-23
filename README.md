@@ -252,8 +252,15 @@ are demanded "less than 6 months old".
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pytest tests/ -q
+python -m pytest tests/ -q                    # 272 tests, no key, no network
+
+cp .env.example .env                          # add ONE model key
+python -m tender_compliance samples/real_dce/rc_ANTAI_2026.pdf \
+  --deadline 2026-10-28 --html out/antai.html
 ```
+
+`python demo/walkthrough.py` runs the same thing shot by shot; the recording
+script is in [docs/video.md](docs/video.md).
 
 ## Provenance and disclosures
 
