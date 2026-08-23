@@ -55,7 +55,13 @@ from datetime import date
 
 from tender_compliance.coverage import Citation, Row, Status
 from tender_compliance.obligations import Obligation
-from tender_compliance.validity import Document, Requirement, Validity, assess
+from tender_compliance.validity import (
+    Document,
+    Requirement,
+    Validity,
+    assess,
+    days_of_slack,
+)
 
 
 @dataclass(frozen=True)
@@ -261,6 +267,7 @@ def to_row(match: Match, deadline: date, *, today: date) -> Row:
     )
     status = _STATUS_FOR[verdict]
     note = _DATE_NOTE.get(verdict, match.reason)
+    slack = days_of_slack(match.document, deadline)
 
     # A document that is fine on the dates still cannot carry a COVERED row when
     # the match itself is uncertain. Downgrading here rather than earlier keeps
@@ -268,12 +275,12 @@ def to_row(match: Match, deadline: date, *, today: date) -> Row:
     # is not being asserted.
     if status is Status.COVERED and not match.certain:
         return Row(**base, status=Status.NEEDS_REVIEW,
-                   evidence=match.citation, note=match.reason)
+                   evidence=match.citation, note=match.reason, slack=slack)
 
     # An EXPIRED row keeps its citation: the remedy is renewing that document,
     # and the reader needs to know which one.
     evidence = match.citation if status is not Status.MISSING else None
-    return Row(**base, status=status, evidence=evidence, note=note)
+    return Row(**base, status=status, evidence=evidence, note=note, slack=slack)
 
 
 Propose = Callable[[Obligation, list[Document]], list[Suggestion]]
@@ -295,7 +302,21 @@ def build(
     today: date,
     propose: Propose,
 ) -> list[Row]:
-    """The compliance matrix for one tender against one evidence library."""
+    """The compliance matrix for one tender against one evidence library.
+
+    A proposer may expose `prepare(obligations, library)` to answer several
+    obligations in one round trip. Measured on the 34-page ANTAI file, asking
+    one at a time meant forty calls that each re-sent the same brief and the
+    same catalogue — 65,000 characters to convey 40 short requirements.
+
+    It is an optimisation and nothing more. Whatever a prepared proposer
+    returns still goes through `resolve`, which is where the guarantees live,
+    so a batching bug can make the tool slower or blinder but never looser.
+    """
+    prepare = getattr(propose, "prepare", None)
+    if prepare is not None:
+        prepare(obligations, library)
+
     return [
         to_row(find(obligation, library, propose), deadline, today=today)
         for obligation in obligations

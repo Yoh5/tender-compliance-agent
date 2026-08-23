@@ -110,6 +110,13 @@ class Page:
     scanned: bool = False
     """True when the page is essentially one large picture."""
 
+    addressed_to_the_model: tuple[str, ...] = ()
+    """Instruction-shaped phrases found on this page — see `untrusted.py`.
+
+    A consultation file is written by someone else. Anyone who can put text on
+    a page a bidder analyses can address the model directly, and white-on-white
+    eight-point text reaches the model without reaching the reader."""
+
     @property
     def fidelity(self) -> Fidelity:
         return Fidelity.LOSSY if (self.rasterised or self.scanned) else Fidelity.COMPLETE
@@ -139,14 +146,21 @@ class Source:
         return sorted(lossy, key=lambda page: page.unreadable_runs, reverse=True)
 
     @property
+    def tampered(self) -> list[Page]:
+        """Pages carrying text addressed to the model rather than the reader."""
+        return [page for page in self.pages if page.addressed_to_the_model]
+
+    @property
     def complete(self) -> bool:
-        """True only when every page was read in full.
+        """True only when every page was read in full and nothing on it was
+        talking to the analyser.
 
         Callers must consult this before reporting that the file does not ask
         for something. An obligation absent from an incompletely read file has
-        not been shown to be absent.
+        not been shown to be absent — and neither has one absent from a file
+        that contains an instruction to omit it.
         """
-        return not self.unreadable
+        return not self.unreadable and not self.tampered
 
     @property
     def text(self) -> str:
@@ -160,17 +174,39 @@ class Source:
         """
         if self.complete:
             return ""
+
+        notes = []
+        if self.tampered:
+            where = ", ".join(str(page.number) for page in self.tampered)
+            quoted = "; ".join(
+                f"\u201c{phrase}\u201d"
+                for page in self.tampered for phrase in page.addressed_to_the_model[:2]
+            )
+            notes.append(
+                f"{self.path.name}: page{'s' if len(self.tampered) > 1 else ''} "
+                f"{where} contain{'' if len(self.tampered) > 1 else 's'} text "
+                f"addressed to an automated reader rather "
+                f"than to a bidder ({quoted}). Nothing here can be asserted from "
+                f"this file until a human has looked at those pages — an "
+                f"instruction to leave a requirement out cannot be detected "
+                f"anywhere downstream."
+            )
+
+        if not self.unreadable:
+            return " ".join(notes)
+
         pages = ", ".join(
             str(page.number)
             for page in sorted(self.unreadable, key=lambda page: page.number)
         )
         plural = "s" if len(self.unreadable) > 1 else ""
-        return (
+        notes.append(
             f"{self.path.name}: part of the text is stored as images on "
             f"page{plural} {pages}, so no extractor can read it. Requirements "
             f"stated there are missing from this analysis — read those pages by "
             f"hand before treating any obligation as absent."
         )
+        return " ".join(notes)
 
 
 def read(path: str | Path) -> Source:
@@ -204,11 +240,15 @@ def _read_page(page, number: int) -> Page:
         and (box[2] - box[0]) > MIN_STRIP_WIDTH
     )
 
+    from tender_compliance.untrusted import markers
+
+    text = page.get_text()
     return Page(
         number=number,
-        text=page.get_text(),
+        text=text,
         rasterised=rasterised,
         scanned=scanned,
+        addressed_to_the_model=tuple(markers(text)),
     )
 
 

@@ -107,6 +107,15 @@ class Row:
 
     note: str = ""
 
+    slack: int | None = None
+    """Days between the evidence expiring and bids being due. Negative means it
+    lapses first.
+
+    Carried on the row rather than recomputed by whoever renders it: a report
+    and a summary that each work it out will eventually work it out differently.
+    None when the document has no readable expiry, which is not the same as
+    zero."""
+
 
 @dataclass(frozen=True)
 class Measurement:

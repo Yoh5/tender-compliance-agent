@@ -225,6 +225,121 @@ class TestBatching:
         assert 1 <= PAGES_PER_BATCH <= 8
 
 
+class TestEvidenceIsAskedInGroups:
+    """One call per requirement re-sent the brief and the whole catalogue every
+    time: on the 34-page file, 40 calls carrying 65,000 characters to convey 40
+    short sentences. Grouping cuts three quarters of that.
+
+    The risk grouping introduces is misalignment — answer 3 attached to
+    requirement 4 — so that is what these check. A fake agent stands in for the
+    model: no key, no network, and every call counted.
+    """
+
+    class FakeAgent:
+        """Answers by index, and records every prompt it was given."""
+
+        def __init__(self, log, plan):
+            self.log = log
+            self.plan = plan
+
+        def structured_output(self, schema, prompt):
+            self.log.append(prompt)
+            matches = []
+            for number, name in self.plan.items():
+                if f"\n{number}. " in prompt or prompt.count("REQUIREMENTS") == 0:
+                    matches.append({"index": number, "document": name,
+                                    "page": None, "satisfies": True, "reason": ""})
+            return schema(matches=matches)
+
+    def factory(self, log, plan):
+        return lambda: self.FakeAgent(log, plan)
+
+    def test_five_obligations_take_one_call_not_five(self, library_and_deadline):
+        from tender_compliance.tender import evidence_proposer
+        library, _ = library_and_deadline
+        log = []
+        propose = evidence_proposer(self.factory(log, {}), group_size=5)
+
+        obligations = [_obligation(f"exigence {n}") for n in range(5)]
+        propose.prepare(obligations, library)
+        assert len(log) == 1
+
+    def test_twelve_obligations_take_three_calls(self, library_and_deadline):
+        from tender_compliance.tender import evidence_proposer
+        library, _ = library_and_deadline
+        log = []
+        propose = evidence_proposer(self.factory(log, {}), group_size=5)
+        propose.prepare([_obligation(f"exigence {n}") for n in range(12)], library)
+        assert len(log) == 3
+
+    def test_each_answer_reaches_the_requirement_it_was_given_for(self, library_and_deadline):
+        # The failure grouping exists to risk. Answer 2 names URSSAF; it must
+        # come back for the second obligation and for no other.
+        from tender_compliance.tender import evidence_proposer
+        library, _ = library_and_deadline
+        propose = evidence_proposer(
+            self.factory([], {2: URSSAF}), group_size=5)
+
+        obligations = [_obligation(f"exigence {n}") for n in range(4)]
+        propose.prepare(obligations, library)
+
+        answers = [propose(o, library) for o in obligations]
+        assert [len(a) for a in answers] == [0, 1, 0, 0]
+        assert answers[1][0].document == URSSAF
+
+    def test_the_catalogue_is_sent_once_per_group_not_once_per_obligation(
+            self, library_and_deadline):
+        from tender_compliance.tender import evidence_proposer
+        library, _ = library_and_deadline
+        log = []
+        propose = evidence_proposer(self.factory(log, {}), group_size=5)
+        propose.prepare([_obligation(f"exigence {n}") for n in range(5)], library)
+        assert sum(prompt.count(URSSAF) for prompt in log) == 1
+
+    def test_an_unprepared_proposer_still_works(self, library_and_deadline):
+        # build() calls prepare when it exists, but nothing may assume it ran.
+        from tender_compliance.tender import evidence_proposer
+        library, _ = library_and_deadline
+        log = []
+        propose = evidence_proposer(self.factory(log, {1: URSSAF}), group_size=5)
+        answers = propose(_obligation("exigence isolée"), library)
+        assert len(log) == 1
+        assert answers[0].document == URSSAF
+
+    def test_an_obligation_outside_the_plan_falls_back_to_its_own_call(
+            self, library_and_deadline):
+        # Slower, never wrong: the fallback is what makes misalignment a
+        # performance bug rather than a correctness one.
+        from tender_compliance.tender import evidence_proposer
+        library, _ = library_and_deadline
+        log = []
+        propose = evidence_proposer(self.factory(log, {1: URSSAF}), group_size=5)
+        propose.prepare([_obligation("planifiée")], library)
+        log.clear()
+
+        propose(_obligation("jamais planifiée"), library)
+        assert len(log) == 1
+
+    def test_build_drives_the_whole_thing(self, library_and_deadline):
+        from tender_compliance.evidence import build
+        from tender_compliance.tender import evidence_proposer
+        library, deadline = library_and_deadline
+        log = []
+        propose = evidence_proposer(self.factory(log, {}), group_size=5)
+
+        rows = build([_obligation(f"exigence {n}") for n in range(10)],
+                     library, deadline, today=TODAY, propose=propose)
+        assert len(rows) == 10
+        assert len(log) == 2, "build() must call prepare(), not ask ten times"
+
+
+def _obligation(text):
+    from tender_compliance.coverage import Citation, Stage
+    from tender_compliance.obligations import Obligation
+    return Obligation(text=text, source=Citation(document="rc.pdf", page=5),
+                      stage=Stage.BID)
+
+
 def test_the_pipeline_never_emits_a_row_it_cannot_defend(clean, library_and_deadline):
     """The assertion worth more than the rest, across every proposer behaviour."""
     library, deadline = library_and_deadline

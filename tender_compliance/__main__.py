@@ -82,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--today", default=None, help="ISO date to assess against")
     parser.add_argument("--pages", default=None,
                         help="limit to a page range, e.g. 11-15 (for a quick look)")
+    parser.add_argument("--html", default=None,
+                        help="also write a self-contained HTML report to this path")
     args = parser.parse_args(argv)
 
     load_env()
@@ -138,6 +140,16 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(render(analysis))
+
+    if args.html:
+        from tender_compliance.report import render as render_html
+
+        destination = Path(args.html)
+        destination.write_text(render_html(analysis, today=today), encoding="utf-8")
+        # To stderr: stdout is the report, and a caller piping it should not
+        # have to strip a progress line out of the middle.
+        print(f"wrote {destination}", file=sys.stderr)
+
     return 0
 
 

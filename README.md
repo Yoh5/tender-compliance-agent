@@ -230,6 +230,8 @@ Early. This repository was created for the hackathon and starts from zero.
 | `__main__.py` — `python -m tender_compliance <pdf>` | implemented |
 | `obligations.py` — extracting obligations, and refusing unanchored ones | implemented, tested |
 | `evidence.py` — matching evidence, and refusing to invent it | implemented, tested |
+| `untrusted.py` — spotting text in a tender aimed at the model | implemented, tested |
+| `report.py` — the self-contained HTML report | implemented, tested |
 
 Sector chosen for the demonstration: **French public tenders for IT services**
 (CPV 72xxxxxx). Shorter packs than construction, an evidence library that can be
