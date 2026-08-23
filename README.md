@@ -226,9 +226,8 @@ Early. This repository was created for the hackathon and starts from zero.
 | `capacity.py` — quantified thresholds against company facts | implemented, tested |
 | `extraction.py` — reading a PDF, and knowing when it could not be read | implemented, tested |
 | `tender.py` — reading a tender pack | not started |
-| `obligations.py` — extracting obligations | not started |
+| `obligations.py` — extracting obligations, and refusing unanchored ones | implemented, tested |
 | `evidence.py` — matching evidence to obligations | not started |
-| `drafting.py` — drafting from proven material only | not started |
 
 Sector chosen for the demonstration: **French public tenders for IT services**
 (CPV 72xxxxxx). Shorter packs than construction, an evidence library that can be
@@ -242,6 +241,28 @@ are demanded "less than 6 months old".
 python -m pip install -r requirements.txt
 python -m pytest tests/ -q
 ```
+
+## Provenance and disclosures
+
+Written for the [Agents for Humans](https://agentsforhumans.devpost.com)
+hackathon, from an empty repository, first commit 23 August 2026 — inside the
+submission period, which opened on 10 August.
+
+**No pre-existing code is incorporated.** Every module here was written for this
+submission. Dependencies are the ones in `requirements.txt`, used as published:
+Strands Agents (the SDK the hackathon requires), PyMuPDF, and pytest.
+
+**Third-party material, all public.** `samples/real_dce/` holds two règlements
+de la consultation published by French public buyers — the Ministry of the
+Interior (ANTAI) and the DGAC — downloaded from the state procurement platform,
+where they are freely available without registration. They are the buyers' own
+consultation rules, and they are committed so that a reader can verify the
+claims the tests make about them. Provenance for every quoted requirement is in
+`samples/real_requirements.json`.
+
+**The evidence library is fabricated**, and says so in the file. Publishing
+which of a real company's certificates have lapsed is not something a
+demonstration gets to do. See `samples/README.md`.
 
 ## Licence
 
