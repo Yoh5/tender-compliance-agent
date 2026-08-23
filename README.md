@@ -227,7 +227,7 @@ Early. This repository was created for the hackathon and starts from zero.
 | `extraction.py` — reading a PDF, and knowing when it could not be read | implemented, tested |
 | `tender.py` — reading a tender pack | not started |
 | `obligations.py` — extracting obligations, and refusing unanchored ones | implemented, tested |
-| `evidence.py` — matching evidence to obligations | not started |
+| `evidence.py` — matching evidence, and refusing to invent it | implemented, tested |
 
 Sector chosen for the demonstration: **French public tenders for IT services**
 (CPV 72xxxxxx). Shorter packs than construction, an evidence library that can be
