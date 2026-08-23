@@ -7,6 +7,8 @@ running it never has their own configuration decide whether a test passes.
 
 import pytest
 
+from pathlib import Path
+
 from tender_compliance.model import (
     ANTHROPIC,
     OPENAI,
@@ -98,6 +100,71 @@ class TestKeysNeverLeave:
 
     def test_availability_reports_presence_not_value(self):
         assert available({"OPENAI_API_KEY": self.SECRET}) == [OPENAI]
+
+
+class TestTlsTrust:
+    """The fix for a machine whose TLS is intercepted.
+
+    No network here: these assert the contract, not the connection. The live
+    proof is in the commit message — the agent turn that failed with a bare
+    "Connection error" before this and completed after.
+    """
+
+    def test_it_reports_whether_the_patch_took(self):
+        from tender_compliance.model import use_system_trust
+        assert isinstance(use_system_trust(), bool)
+
+    def test_calling_it_twice_is_safe(self):
+        # build() calls it on every model construction, so it has to be cheap
+        # and idempotent rather than something callers must coordinate.
+        from tender_compliance.model import use_system_trust
+        assert use_system_trust() == use_system_trust()
+
+    def test_verification_is_never_disabled(self):
+        """An API key travels on these connections, so turning verification off
+        would hand it to whoever is intercepting — the failure this function
+        exists to prevent, not to cause.
+
+        Read as syntax, not as text: the first version of this test grepped the
+        file and failed on the module's own docstring, which quotes the very
+        thing it forbids. A test that cannot tell code from prose is a test that
+        pushes the explanation out of the code to stay green.
+        """
+        import ast
+
+        source = Path(__file__).resolve().parent.parent / "tender_compliance" / "model.py"
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.keyword):
+                if node.arg in {"verify", "check_hostname"}:
+                    assert not (isinstance(node.value, ast.Constant)
+                                and node.value.value is False), \
+                        f"{node.arg}=False disables TLS verification"
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Attribute) and target.attr in {
+                        "check_hostname", "verify_mode",
+                    }:
+                        assert not (isinstance(node.value, ast.Constant)
+                                    and node.value.value is False), \
+                            f"{target.attr} is being switched off"
+            if isinstance(node, ast.Attribute) and node.attr == "CERT_NONE":
+                raise AssertionError("ssl.CERT_NONE disables certificate checking")
+
+
+class TestBuildingTheModelObject:
+    """Constructing a model must not touch the network — only using it does."""
+
+    def test_openai_is_built_from_an_explicit_model_id(self):
+        from tender_compliance.model import build
+        model = build(env={**FAKE_OPENAI, "TENDER_MODEL": "some-model"})
+        assert "some-model" in repr(model.get_config())
+
+    def test_anthropic_uses_its_known_default(self):
+        from tender_compliance.model import build
+        model = build(env=FAKE_ANTHROPIC)
+        assert "claude" in repr(model.get_config())
 
 
 def test_describe_is_safe_to_print_in_a_report():
