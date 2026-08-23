@@ -74,6 +74,9 @@ def load(path: str | Path) -> tuple[list[Document], date]:
                 # Absent means "not thought about", which is not the same as
                 # "never expires". See the module docstring.
                 has_expiry=entry.get("has_expiry", True),
+                # Where the proof sits inside that document. One page is the
+                # overwhelming majority of compliance paperwork.
+                page=int(entry.get("page", 1)),
             )
         )
 

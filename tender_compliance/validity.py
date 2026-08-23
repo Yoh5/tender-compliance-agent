@@ -105,6 +105,15 @@ class Document:
     extract, a diploma). Leave it True whenever there is any doubt: the cost of
     a needless review is a glance, the cost of a missed expiry is the tender."""
 
+    page: int = 1
+    """Where inside this document the proof sits.
+
+    Almost every compliance document is one or two pages, so 1 is right far more
+    often than not — and it comes from the library rather than from a model,
+    which is the point. The first live run demanded a page from the model, which
+    had no way to know one, so nearly every row degraded to "review" and the
+    matrix stopped saying anything. The citation is data, not a guess."""
+
 
 @dataclass(frozen=True)
 class Requirement:

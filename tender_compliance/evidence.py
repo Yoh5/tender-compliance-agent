@@ -17,7 +17,8 @@ the part it is genuinely good at. It may not:
 
   * name a document that is not in the library (`resolve` drops those; the
     library is the ground truth about what the company holds, not the model);
-  * assert coverage without a page (invariant 1);
+  * choose where the citation points — that comes from the library, which is
+    where the company says its own proof sits;
   * decide whether a document is still good on the submission date, which is
     arithmetic and belongs to `validity.assess` (invariant 2);
   * resolve its own ambiguity — two candidates for one obligation is a fact
@@ -65,8 +66,24 @@ class Suggestion:
     """Must name a document in the library, verbatim. Anything else is dropped."""
 
     page: int | None = None
-    """Where in that document the point is proven. Absent means the row cannot
-    be COVERED — see invariant 1."""
+    """Optional refinement inside a document the library already vouches for.
+    Absent is the normal case: the citation then uses the page the library
+    itself declares."""
+
+    satisfies: bool = True
+    """Whether this document actually answers the requirement.
+
+    Added after watching a live run. Told to return nothing when the library has
+    no answer, the model instead returned the nearest document and explained, in
+    its own reason field, that it did not answer — "Le Kbis n'est pas un DUME
+    distinct" arrived attached to a row marked covered. That is the failure this
+    module was written for, observed rather than imagined: asked whether a
+    document satisfies a requirement, a model finds a way to say yes.
+
+    So the judgement is a field it must fill in rather than prose nobody parses,
+    and only an explicit yes is accepted. Anything else is a document considered
+    and set aside — reported as such, because "closest was X, and it does not
+    answer this" is more useful to a bidder than a bare MISSING."""
 
     reason: str = ""
 
@@ -108,11 +125,16 @@ def resolve(
     # The library is the ground truth about what the company holds. A model
     # naming a document that is not in it has invented the document, and that
     # is the failure this whole module exists to make impossible.
-    usable = [s for s in suggestions if s.document in known]
-    invented = len(suggestions) - len(usable)
+    present = [s for s in suggestions if s.document in known]
+    invented = len(suggestions) - len(present)
+
+    # Only an explicit yes counts. Everything else is a near miss, and naming it
+    # helps more than hiding it.
+    usable = [s for s in present if s.satisfies]
+    considered = [s.document for s in present if not s.satisfies]
 
     if not usable:
-        return _nothing_found(obligation, invented)
+        return _nothing_found(obligation, invented, considered)
 
     distinct = {s.document for s in usable}
     if len(distinct) > 1:
@@ -128,16 +150,20 @@ def resolve(
     best = usable[0]
     document = known[best.document]
 
-    if best.page is None or best.page < 1:
-        return Match(
-            obligation, document, None, certain=False,
-            reason=(
-                f"{document.name} looks like the answer, but no page was given — "
-                f"a claim that cannot be shown to the buyer is not a claim"
-            ),
-        )
-
-    citation = Citation(document=document.name, page=best.page)
+    # THE CITATION COMES FROM THE LIBRARY, NOT FROM THE MODEL.
+    #
+    # The first version demanded a page from the model and downgraded the row
+    # when none came. Run against a real consultation file, nearly every row
+    # degraded: the library describes documents by name and date and carries no
+    # pagination, so the model was being asked for something it had no way to
+    # know. A matrix where everything says "review" says nothing.
+    #
+    # The document's own declared page is data — it is where the company says
+    # the proof sits. A page volunteered by the model is used only when it is
+    # usable, and only as a refinement inside a document the library already
+    # vouches for.
+    page = best.page if best.page and best.page >= 1 else document.page
+    citation = Citation(document=document.name, page=page)
 
     if not obligation.anchored:
         # The obligation itself could not be located in the tender text.
@@ -155,8 +181,24 @@ def resolve(
     )
 
 
-def _nothing_found(obligation: Obligation, invented: int) -> Match:
-    """Nothing in the library was proposed — which is not always MISSING."""
+def _nothing_found(
+    obligation: Obligation, invented: int, considered: list[str] | None = None
+) -> Match:
+    """Nothing in the library answers this — which is not always MISSING."""
+    near = ""
+    if considered:
+        near = (f" (closest: {', '.join(sorted(set(considered)))}, "
+                f"which the matcher judged does not answer it)")
+
+    if obligation.to_produce:
+        # A form written for this tender, not a paper in a folder. An evidence
+        # library cannot hold it, so its absence says nothing about the bidder.
+        reason = ("this is a form to fill in for this tender, not a document to "
+                  "find — an evidence library cannot answer it")
+        if considered:
+            reason += near
+        return Match(obligation, None, None, certain=False, reason=reason)
+
     if not obligation.anchored:
         reason = ("nothing found, and the requirement itself could not be "
                   "verified against the tender text")
@@ -167,12 +209,12 @@ def _nothing_found(obligation: Obligation, invented: int) -> Match:
         reason = ("nothing found on this route, but the tender allows more than "
                   "one way to satisfy it")
     else:
-        reason = "nothing in the library answers this"
+        reason = "nothing in the library answers this" + near
         if invented:
             reason += f" ({invented} suggested document(s) are not in the library)"
         return Match(obligation, None, None, certain=True, reason=reason)
 
-    return Match(obligation, None, None, certain=False, reason=reason)
+    return Match(obligation, None, None, certain=False, reason=reason + near)
 
 
 # How a date verdict becomes a matrix status. Written as a table because the

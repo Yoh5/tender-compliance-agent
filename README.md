@@ -226,7 +226,8 @@ Early. This repository was created for the hackathon and starts from zero.
 | `capacity.py` — quantified thresholds against company facts | implemented, tested |
 | `extraction.py` — reading a PDF, and knowing when it could not be read | implemented, tested |
 | `model.py` — provider selection, Anthropic or OpenAI | implemented, tested |
-| `tender.py` — reading a tender pack | not started |
+| `tender.py` — the pipeline, and the agent that feeds it | implemented, tested |
+| `__main__.py` — `python -m tender_compliance <pdf>` | implemented |
 | `obligations.py` — extracting obligations, and refusing unanchored ones | implemented, tested |
 | `evidence.py` — matching evidence, and refusing to invent it | implemented, tested |
 

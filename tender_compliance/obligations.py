@@ -117,6 +117,29 @@ _ALTERNATIVE = re.compile(
     re.IGNORECASE,
 )
 
+_TO_PRODUCE = re.compile(
+    r"\b(?:d[ée]clarations?\s+(?:sur\s+l['’]honneur|du\s+candidat|concernant|"
+    r"indiquant|de\s+sous-traitance)"
+    r"|lettre\s+de\s+candidature"
+    r"|(?:formulaire|imprim[ée])\s+DC\s*\d"
+    r"|DC\s*[1-4]\b"
+    r"|DUME"
+    r"|document\s+unique\s+de\s+march[ée]\s+europ[ée]en"
+    r"|document\s+d['’]habilitation)",
+    re.IGNORECASE,
+)
+"""Requirements answered by writing a form, not by finding a document.
+
+Recorded while reading real notices, and built only after a live run made the
+cost visible. Nine rows came back MISSING for a company with nothing to look
+for: the tender asked for "une déclaration sur l'honneur", "le formulaire DC1",
+"un DUME", and an evidence library cannot contain any of them — they are
+produced for this tender, not held in a folder.
+
+Reporting those as missing is the failure this project keeps circling: noise
+that makes a reader stop trusting the gaps that are real.
+"""
+
 _PERFORMANCE = re.compile(
     r"\b(?:le\s+titulaire|pendant\s+(?:toute\s+)?l['’]exécution|"
     r"en\s+cours\s+d['’]exécution|durée\s+du\s+marché|chaque\s+mois|mensuel)",
@@ -162,6 +185,11 @@ class Obligation:
     has_alternatives: bool = False
     """The requirement names more than one way to satisfy it ("ou équivalent",
     "ou, à défaut, une déclaration", "Ou PARTIE IV C 1b) du DUME")."""
+
+    to_produce: bool = False
+    """Answered by writing a form rather than by finding a document. Searching
+    an evidence library for a "déclaration sur l'honneur" is searching for
+    something that does not exist yet."""
 
     anchored: bool = True
     """False only on a page `extraction.py` flagged LOSSY. See the module
@@ -281,6 +309,7 @@ def enrich(proposal: Proposal, document: str) -> Obligation:
         max_age_months=max_age_months(proposal.text),
         conditional=bool(_CONDITIONAL.search(proposal.text)),
         has_alternatives=bool(_ALTERNATIVE.search(proposal.text)),
+        to_produce=bool(_TO_PRODUCE.search(proposal.text)),
     )
 
 

@@ -289,6 +289,77 @@ class TestEndToEnd:
         assert len(verify(twice, clean).obligations) == 2
 
 
+class TestFormsAreNotDocuments:
+    """A requirement answered by writing something, not by finding it.
+
+    Built after a live run returned nine MISSING rows for a company with
+    nothing to look for: the tender asked for "une déclaration sur l'honneur",
+    "le formulaire DC1" and "un DUME", none of which an evidence library can
+    contain. The distinction was recorded months earlier in
+    samples/real_requirements.json and only became urgent when it was measured.
+    """
+
+    @pytest.mark.parametrize("text", [
+        "Une déclaration sur l'honneur pour justifier qu'il n'entre dans aucun cas",
+        "Lettre de candidature ou formulaire DC1",
+        "l'imprimé DC4 (déclaration de sous-traitance)",
+        "le document unique de marché européen (DUME)",
+        "déclaration concernant le chiffre d'affaires global",
+        "Déclaration indiquant les effectifs moyens annuels du candidat",
+        "un document d'habilitation devra être signé par chacun des membres",
+    ])
+    def test_a_form_to_write_is_recognised(self, text):
+        from tender_compliance.obligations import _TO_PRODUCE
+        assert _TO_PRODUCE.search(text)
+
+    @pytest.mark.parametrize("text", [
+        "Preuve d'une assurance pour les risques professionnels",
+        "Certificat ISO/IEC 27001 en cours de validité",
+        "Attestation de vigilance URSSAF de moins de 6 mois",
+        "Un dossier de références de prestations comparables au marché",
+    ])
+    def test_a_document_to_find_is_not(self, text):
+        from tender_compliance.obligations import _TO_PRODUCE
+        assert not _TO_PRODUCE.search(text)
+
+    def test_the_pattern_compiled_the_way_it_was_written(self):
+        """The defect this class exists because of.
+
+        An earlier version reached the file through a shell heredoc, which
+        turned every \\b into a literal backspace (0x08) and every \\s into
+        backslash-s. The regex compiled without complaint and matched nothing at
+        all, which no behavioural test noticed until a live run produced a
+        matrix full of wrong answers.
+        """
+        from tender_compliance.obligations import (
+            _ALTERNATIVE, _CONDITIONAL, _MAX_AGE, _PERFORMANCE, _TO_PRODUCE,
+        )
+        for name, expression in [
+            ("_TO_PRODUCE", _TO_PRODUCE), ("_CONDITIONAL", _CONDITIONAL),
+            ("_ALTERNATIVE", _ALTERNATIVE), ("_PERFORMANCE", _PERFORMANCE),
+            ("_MAX_AGE", _MAX_AGE),
+        ]:
+            assert "\x08" not in expression.pattern, f"{name} contains a backspace"
+            assert "\\\\" not in expression.pattern, f"{name} has doubled backslashes"
+
+    def test_the_flag_reaches_the_obligation(self, clean):
+        result = verify(
+            [Proposal(text="Déclaration sur l'honneur précisant que le candidat "
+                           "n'est pas en situation de redressement judiciaire",
+                      page=6)],
+            clean,
+        )
+        assert result.obligations[0].to_produce is True
+
+    def test_and_stays_false_for_a_paper_in_a_folder(self, clean):
+        result = verify(
+            [Proposal(text="Preuve d'une assurance pour les risques professionnels",
+                      page=5)],
+            clean,
+        )
+        assert result.obligations[0].to_produce is False
+
+
 def test_the_overlap_threshold_stays_in_the_range_the_files_justify():
     # Above ~0.8 correct quotations from real PDFs start failing on line-break
     # artefacts; below ~0.5 unrelated administrative prose starts matching,

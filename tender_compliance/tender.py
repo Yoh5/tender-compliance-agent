@@ -1,45 +1,266 @@
-"""Reading a tender pack into pages. NOT IMPLEMENTED YET.
+"""The pipeline: a consultation file in, a checked compliance matrix out.
 
-Unglamorous and load-bearing: every citation in the report is a page number
-produced here, so an off-by-one in this module makes the whole matrix look
-checkable while pointing one page beside the truth.
+Reading PDFs used to live here. It moved to `extraction.py` when that module
+grew the ability to say what it could *not* read, and a second page reader would
+now be a second place for an off-by-one to hide. What remains is the part that
+was always the point — putting the pieces in order and refusing to emit a report
+the pieces do not support.
 
-INVARIANT — PAGES ARE 1-BASED, AS PRINTED
+WHERE THE MODEL SITS
 
-PDF libraries index from zero. Buyers, bidders and the documents themselves
-count from one. The conversion happens here, once, at the boundary, and
-`coverage.check()` refuses any row citing page 0 — the signature of a 0-based
-index that leaked.
+Twice, and only twice:
 
-INVARIANT — A PAGE THAT YIELDS NO TEXT IS REPORTED, NOT SKIPPED
+    pages ──▶ [model proposes obligations] ──▶ obligations.verify ──▶ obligations
+    obligation ──▶ [model proposes evidence] ──▶ evidence.resolve ──▶ match
+    match ──▶ validity.assess (arithmetic) ──▶ row
 
-Tender packs are full of scanned annexes. A silently empty page becomes an
-obligation nobody extracted, in a report that claims to have read everything.
+Everything after each arrow is deterministic. The model never sees a date
+calculation, never decides a status, and never has its output reach the matrix
+without passing a verification step that can reject it.
+
+WHY THE PROPOSERS ARE PARAMETERS
+
+`analyse` takes them as arguments rather than building them. That is what lets
+the entire pipeline be tested end to end with no model, no key and no network —
+and it is the same reason the two modules underneath do it. A pipeline that can
+only be exercised by paying an API call is a pipeline whose behaviour nobody
+checks on the cases that matter.
+
+THE REPORT VALIDATES ITSELF, AND REFUSES TO PRINT IF IT CANNOT
+
+`coverage.check` looks for rows that claim something they cannot show — covered
+without a citation, missing with one, a page below 1. Those are not formatting
+problems. They are the tool asserting what it cannot demonstrate, which is the
+one thing it promises never to do, so `analyse` raises instead of returning.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import date
+
+from tender_compliance.coverage import Measurement, Row, check, measure, ordered
+from tender_compliance.evidence import Propose as ProposeEvidence
+from tender_compliance.evidence import build as build_rows
+from tender_compliance.extraction import Source
+from tender_compliance.obligations import Extraction, Obligation, Proposal
+from tender_compliance.obligations import Propose as ProposeObligations
+from tender_compliance.obligations import extract
+from tender_compliance.validity import Document
+
+PAGES_PER_BATCH = 4
+"""How many pages go to the model at once.
+
+One page per call keeps page numbers unambiguous and costs thirty-four calls on
+a thirty-four-page file. The whole file in one call is one call and loses track
+of which page said what — the failure that makes every citation useless. Four is
+small enough that the page markers stay attached to their text and large enough
+that a requirement split across a page break is still visible in one window.
+"""
+
+
+class ReportError(RuntimeError):
+    """The matrix contains a claim it cannot show. Refuse rather than print."""
 
 
 @dataclass(frozen=True)
-class Page:
-    number: int
-    """1-based, as printed."""
+class Analysis:
+    """Everything one run concluded, and everything it could not."""
 
-    text: str
+    document: str
+    deadline: date
+    rows: list[Row] = field(default_factory=list)
+    """Already ordered: blockers first. Sorted once, here, so no caller has to
+    remember to — and so two callers cannot sort differently."""
+
+    counted: Measurement | None = None
+    rejected: list[tuple[Proposal, str]] = field(default_factory=list)
+    """Proposals the document did not support. Reported, never dropped."""
+
+    unreadable: str = ""
+    """The warning from `extraction`, when pages held text stored as images."""
+
+    model: str = ""
+    """Which model produced the proposals, for provenance. Never a key."""
+
+    @property
+    def headline(self) -> str:
+        return self.counted.headline if self.counted else "nothing analysed"
+
+    @property
+    def trustworthy(self) -> bool:
+        """False when something is known to be missing from the analysis.
+
+        A reader deciding whether to act on this report needs one place to look,
+        not three. Unreadable pages and rejected proposals both mean the same
+        thing: this matrix is not the whole story.
+        """
+        return not self.unreadable and not self.rejected
 
 
-@dataclass(frozen=True)
-class Pack:
-    """The documents that make up one consultation."""
+def analyse(
+    source: Source,
+    library: list[Document],
+    deadline: date,
+    *,
+    today: date,
+    propose_obligations: ProposeObligations,
+    propose_evidence: ProposeEvidence,
+    model: str = "",
+) -> Analysis:
+    """Run one consultation file against one evidence library."""
+    found: Extraction = extract(source, propose_obligations)
 
-    name: str
-    pages: list[Page]
-    unreadable: list[int]
-    """Pages that produced no text — scans, most often. Carried explicitly so
-    the report can say what it could not read."""
+    rows = build_rows(
+        found.obligations, library, deadline, today=today, propose=propose_evidence
+    )
+
+    problems = check(rows)
+    if problems:
+        raise ReportError(
+            "the matrix makes claims it cannot show, so it will not be printed:\n  "
+            + "\n  ".join(problems)
+        )
+
+    return Analysis(
+        document=source.path.name,
+        deadline=deadline,
+        rows=ordered(rows),
+        counted=measure(rows),
+        rejected=found.rejected,
+        unreadable=found.warning,
+        model=model,
+    )
 
 
-def read(path: str) -> Pack:
-    raise NotImplementedError("tender pack reading is not built yet")
+# --------------------------------------------------------------------------
+# The live half. Everything above runs without a model; everything below is
+# what a model is for.
+# --------------------------------------------------------------------------
+
+_OBLIGATION_BRIEF = """\
+You are reading a French public-procurement consultation file (règlement de la
+consultation). List every requirement placed on a CANDIDATE — documents,
+declarations, forms, figures they must supply.
+
+Rules:
+- Each entry names ONE distinct thing the candidate must supply. Quote it from
+  the page, in French, as written — do not translate or summarise.
+- Do NOT split an item into its own qualifiers. "Formulaire DC1, ou équivalent,
+  dûment rempli et daté" is one entry, not three. Include the qualifiers in the
+  quote.
+- Two genuinely different items listed in one sentence are two entries.
+- Give the page number exactly as marked in the text below.
+- A requirement can be two words ("DC1, DC2"). Include it.
+- Include requirements that apply only in some cases ("en cas de", "le cas
+  échéant"); do not decide whether they apply.
+- SKIP rules about how the procedure works — who may bid, how offers are scored,
+  what happens to an incomplete file — unless they require the candidate to
+  supply something.
+- Skip anything about performing the contract after award rather than applying
+  for it, unless you are unsure; when unsure, include it.
+- If a page states no requirement, return nothing for it.
+
+Your quotes are checked against the page text afterwards. A quote that is not
+found there is discarded, so quote rather than paraphrase.
+"""
+
+_EVIDENCE_BRIEF = """\
+You are matching one requirement from a French tender against a company's
+evidence library.
+
+Rules:
+- Choose only from the document names listed. Never invent one, and never adapt
+  a name — reply with the name exactly as listed.
+- Names differ from the wording of the requirement: "RC Pro" and "attestation
+  d'assurance responsabilité civile professionnelle" are the same paper. That
+  judgement is what you are for.
+- For each document you name, set `satisfies`: true ONLY if that document, on
+  its own, answers the requirement as written. Set it to false for a document
+  that is merely related or the closest available. Never set it to true while
+  explaining that the document does not in fact answer — say false.
+- Returning nothing at all is a correct and common answer. A wrong match costs
+  the bidder the tender; a missing one costs them a glance.
+- The page is optional. Omit it unless you know which page proves the point.
+- Never say whether a document is still valid. Dates are computed elsewhere.
+"""
+
+
+def _batches(items: list, size: int) -> list[list]:
+    return [items[index:index + size] for index in range(0, len(items), size)]
+
+
+def obligation_proposer(agent_factory, pages_per_batch: int = PAGES_PER_BATCH):
+    """A `Propose` for `obligations.extract`, backed by a Strands agent.
+
+    `agent_factory` is called for each batch so every batch starts from an empty
+    conversation. Carrying history across batches would let page 30 be answered
+    partly from what page 4 said, and the citation would still point at page 30.
+    """
+    from pydantic import BaseModel, Field
+
+    class _Item(BaseModel):
+        text: str = Field(description="the requirement, quoted from the page in French")
+        page: int = Field(description="page number as marked in the text")
+        performance: bool = Field(
+            default=False,
+            description="true only if this concerns performing the contract after award",
+        )
+
+    class _Answer(BaseModel):
+        obligations: list[_Item] = Field(default_factory=list)
+
+    def propose(source: Source) -> list[Proposal]:
+        from tender_compliance.coverage import Stage
+
+        proposals: list[Proposal] = []
+        for batch in _batches(source.pages, pages_per_batch):
+            body = "\n\n".join(
+                f"=== PAGE {page.number} ===\n{page.text}" for page in batch
+            )
+            answer = agent_factory().structured_output(
+                _Answer, f"{_OBLIGATION_BRIEF}\n\n{body}"
+            )
+            for item in answer.obligations:
+                proposals.append(Proposal(
+                    text=item.text,
+                    page=item.page,
+                    stage=Stage.PERFORMANCE if item.performance else None,
+                ))
+        return proposals
+
+    return propose
+
+
+def evidence_proposer(agent_factory):
+    """A `Propose` for `evidence.build`, backed by a Strands agent."""
+    from pydantic import BaseModel, Field
+
+    class _Match(BaseModel):
+        document: str = Field(description="a document name copied exactly from the list")
+        page: int | None = Field(default=None, description="page proving the point")
+        satisfies: bool = Field(
+            description="true ONLY if this document answers the requirement as "
+                        "written; false if it is merely related or the closest one",
+        )
+        reason: str = Field(default="", description="one sentence")
+
+    class _Answer(BaseModel):
+        matches: list[_Match] = Field(default_factory=list)
+
+    def propose(obligation: Obligation, library: list[Document]):
+        from tender_compliance.evidence import Suggestion
+
+        catalogue = "\n".join(f"- {document.name}" for document in library)
+        answer = agent_factory().structured_output(
+            _Answer,
+            f"{_EVIDENCE_BRIEF}\n\nREQUIREMENT:\n{obligation.text}\n\n"
+            f"EVIDENCE LIBRARY:\n{catalogue}",
+        )
+        return [
+            Suggestion(document=m.document, page=m.page,
+                       satisfies=m.satisfies, reason=m.reason)
+            for m in answer.matches
+        ]
+
+    return propose
