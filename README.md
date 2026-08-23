@@ -90,6 +90,51 @@ expires nine days before the deadline does so on every machine, every time.
 `tests/test_library.py` asserts each verdict still fires, so the fixture is
 tested like code.
 
+## What reading real notices changed
+
+The design was written first, then two published notices were read — the
+Ministry of Education's application-support framework and the City of Paris
+datacenter contract. Both are quoted verbatim, with provenance, in
+`samples/real_requirements.json`.
+
+They broke the design in a way the specification could not have shown, because
+the specification was written by someone imagining how buyers write.
+
+**Not every obligation is answered by a document.**
+
+> « Le candidat donne toutes les informations permettant de justifier de son
+> chiffre d'affaires annuel global moyen sur les trois derniers exercices »
+> — « si x est strictement supérieur à 3 124 998 d'euros HT : 2/2 »
+
+No paper satisfies that. No expiry date decides it. It is a number against a
+threshold, and the evidence matcher would have reported MISSING on a company
+that meets it comfortably. Hence `capacity.py`.
+
+**Buyers grade, they do not only admit.** `2/2` is a scoring grid: a bidder can
+be admissible and still lose points. A status alone throws that away.
+
+**One obligation, several satisfaction paths.**
+
+> « Les prestations de services sont prouvées par des attestations du
+> destinataire ou, à défaut, par une déclaration de l'opérateur économique. Ou
+> PARTIE IV C 1b) du DUME. »
+
+Three routes in one sentence. Reporting MISSING because the first is empty is
+wrong, and wrong in the direction that wastes the bidder's time.
+
+**Refusing a young company is usually not what the buyer wants.**
+
+> « Pour les candidats dans l'impossibilité, à raison de leur création récente,
+> de produire la liste de références susmentionnée, il est demandé tout autre
+> moyen de preuve »
+
+A firm with two years of accounts against a three-year window has not failed —
+it falls on a different path. `capacity.py` returns *needs review* there, never
+*missing*: the other error costs a bid that was winnable.
+
+**An obligation can be two words.** « DC1, DC2 » is a complete requirement. An
+extractor built on sentences walks straight past it.
+
 ## Status
 
 Early. This repository was created for the hackathon and starts from zero.
@@ -99,6 +144,7 @@ Early. This repository was created for the hackathon and starts from zero.
 | `validity.py` — date arithmetic on evidence | implemented, tested |
 | `coverage.py` — the compliance matrix and its counts | implemented, tested |
 | `library.py` — loading a company's evidence library | implemented, tested |
+| `capacity.py` — quantified thresholds against company facts | implemented, tested |
 | `tender.py` — reading a tender pack | not started |
 | `obligations.py` — extracting obligations | not started |
 | `evidence.py` — matching evidence to obligations | not started |

@@ -1,0 +1,140 @@
+{
+  "_what_this_is": "Requirement wording taken VERBATIM from real French public tender notices, with provenance. Unlike samples/evidence_library.json, nothing here is invented — these are published documents, quoted so the extractor is designed against how buyers actually write, not how we imagine they write.",
+  "_why_it_exists": "Reading real material is what turned up the design gaps recorded at the bottom of this file. None of them were visible from the specification.",
+  "_a_note_on_availability": "Since eForms became mandatory, notices no longer carry these sections: they point at the consultation file instead ('epo-procurement-document'). The excerpts below come from notices published under the previous national format, which stated them in full. The wording has not changed — only where it is published has.",
+  "sources": [
+    {
+      "id": "22-87951",
+      "buyer": "Ministère de l'éducation nationale",
+      "object": "Prestations d'assistance à maîtrise d'ouvrage applicative",
+      "procedure": "ouvert",
+      "notice": "https://www.boamp.fr/pages/avis/?q=idweb:22-87951",
+      "excerpts": [
+        {
+          "section": "situation juridique",
+          "text": "Le soumissionnaire produit une déclaration sur l'honneur selon laquelle il n'entre dans aucun des motifs d'exclusion",
+          "answered_by": "declaration",
+          "note": "A form produced for this tender, not a document held in a folder. It has no expiry and cannot be 'missing' from a library — it is written."
+        },
+        {
+          "section": "capacité économique et financière",
+          "text": "Le candidat donne toutes les informations permettant de justifier de son chiffre d'affaires annuel global moyen sur les trois derniers exercices disponibles",
+          "answered_by": "company_fact",
+          "measure": "turnover",
+          "window_years": 3,
+          "aggregation": "average"
+        },
+        {
+          "section": "niveau minimal exigé",
+          "text": "si x est strictement supérieur à 3 124 998 d'euros HT : 2/2",
+          "answered_by": "company_fact",
+          "measure": "turnover",
+          "minimum_eur": 3124998,
+          "strict": true,
+          "note": "Quantified AND scored. The buyer is not asking pass/fail — it is grading. A tool reporting only 'covered' throws away the fact that the bidder scores 1/2 instead of 2/2."
+        },
+        {
+          "section": "capacité technique",
+          "text": "Un dossier de références de prestations comparables au marché qui met en évidence l'expérience du candidat sur les marchés de même type, au titre des cinq (5) dernières années",
+          "answered_by": "company_fact",
+          "measure": "references",
+          "window_years": 5
+        },
+        {
+          "section": "niveau minimal exigé",
+          "text": "si x est supérieur ou égal à 4: 2/2",
+          "answered_by": "company_fact",
+          "measure": "references",
+          "minimum": 4,
+          "strict": false
+        },
+        {
+          "section": "capacité technique",
+          "text": "Nombre de ressources du candidat pour la dernière année disponible spécialisées dans des prestations d'assistance à maitrise d'ouvrage",
+          "answered_by": "company_fact",
+          "measure": "specialists",
+          "window_years": 1
+        },
+        {
+          "section": "capacité technique",
+          "text": "si le candidat a un processus certifié ou un processus propre à sa société non certifié : 2/2",
+          "answered_by": "document_or_declaration",
+          "note": "Either a certificate OR an uncertified internal process. Two very different pieces of evidence satisfying one requirement — see gap 2 below."
+        }
+      ]
+    },
+    {
+      "id": "22-88307",
+      "buyer": "Ville de Paris",
+      "object": "Accord-cadre à bons de commande pour l'exploitation, la supervision et l'assistance technique des systèmes de production informatique et réseau du Datacenter de la Ville de Paris",
+      "procedure": "ouvert",
+      "notice": "https://www.boamp.fr/pages/avis/?q=idweb:22-88307",
+      "excerpts": [
+        {
+          "section": "situation juridique",
+          "text": "DC1, DC2",
+          "answered_by": "form",
+          "note": "Standard French candidature forms. Stated in two words — an extractor keyed on sentences will walk straight past this."
+        },
+        {
+          "section": "capacité économique et financière",
+          "text": "Déclaration concernant le chiffre d'affaires global du soumissionnaire portant sur les trois derniers exercices disponibles en fonction de la date de création de l'entreprise ou du début d'activité de l'opérateur économique, dans la mesure où les informations sur ces chiffres d'affaires sont disponibles. Ou PARTIE IV B 1a) et 3) du DUME.",
+          "answered_by": "company_fact",
+          "measure": "turnover",
+          "window_years": 3,
+          "alternative": "DUME partie IV B 1a) et 3)"
+        },
+        {
+          "section": "capacité technique et professionnelle",
+          "text": "La liste des principaux services fournis au cours des trois dernières années, indiquant le montant, la date et le destinataire public ou privé. Les prestations de services sont prouvées par des attestations du destinataire ou, à défaut, par une déclaration de l'opérateur économique. Ou PARTIE IV C 1b) du DUME.",
+          "answered_by": "company_fact",
+          "measure": "references",
+          "window_years": 3,
+          "alternative": "DUME partie IV C 1b)",
+          "note": "Three satisfaction paths in one sentence: attestations from the client, failing that a self-declaration, or the DUME."
+        },
+        {
+          "section": "capacité technique et professionnelle",
+          "text": "Pour les candidats dans l'impossibilité, à raison de leur création récente, de produire la liste de références susmentionnée, il est demandé tout autre moyen de preuve, notamment l'indication des titres d'études et professionnels de l'opérateur économique et/ou des cadres de l'entreprise.",
+          "answered_by": "alternative_path",
+          "note": "An explicit escape route for young firms. A tool reporting MISSING here would be wrong in the direction that costs the bidder a bid they could have won."
+        },
+        {
+          "section": "capacité technique et professionnelle",
+          "text": "Une déclaration indiquant les effectifs moyens annuels du soumissionnaire et l'importance du personnel d'encadrement pendant les trois dernières années Ou PARTIE IV C 8) du DUME.",
+          "answered_by": "company_fact",
+          "measure": "headcount",
+          "window_years": 3,
+          "alternative": "DUME partie IV C 8)"
+        }
+      ]
+    }
+  ],
+  "design_gaps_this_material_revealed": [
+    {
+      "gap": "Not every obligation is answered by a document.",
+      "detail": "'Chiffre d'affaires annuel moyen supérieur à 3 124 998 € HT' is not satisfied by a paper being valid — it is satisfied by a number. The original design ran every obligation through evidence matching and date checking, which cannot decide this at all.",
+      "answer": "capacity.py — quantified thresholds checked against the company profile, deterministically."
+    },
+    {
+      "gap": "One obligation, several satisfaction paths.",
+      "detail": "'Attestations du destinataire ou, à défaut, une déclaration de l'opérateur économique. Ou PARTIE IV C 1b) du DUME.' Three ways to satisfy one requirement. Reporting MISSING because the first path is empty is wrong, and wrong in the direction that wastes the bidder's time.",
+      "answer": "Not built yet. An obligation must carry alternatives, and a match on any one of them covers it."
+    },
+    {
+      "gap": "Buyers grade, they do not only admit.",
+      "detail": "'si x est strictement supérieur à 3 124 998 d'euros HT : 2/2' is a scoring grid. A bidder can be admissible and still lose points.",
+      "answer": "Not built yet. A capacity result should carry the score, not just a status."
+    },
+    {
+      "gap": "An obligation can be two words.",
+      "detail": "'DC1, DC2' is a complete requirement. An extractor built on sentences walks past it.",
+      "answer": "Not built yet — a constraint on obligations.py, recorded before writing it."
+    },
+    {
+      "gap": "Time windows apply to content, not only to certificates.",
+      "detail": "'au titre des cinq (5) dernières années' bounds which references count, not whether a document has expired. Two different notions of date that a single validity check would conflate.",
+      "answer": "capacity.py takes the window as a parameter and counts only what falls inside it."
+    }
+  ]
+}
