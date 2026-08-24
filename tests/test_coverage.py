@@ -25,7 +25,7 @@ from tender_compliance.coverage import (
 PACK = Citation("RC.pdf", 4)
 
 
-def row(status: Status, *, stage: Stage = Stage.BID, evidence: Citation | None = None) -> Row:
+def row(status: Status, *, stage: Stage = Stage.CANDIDATURE, evidence: Citation | None = None) -> Row:
     if status is Status.COVERED and evidence is None:
         evidence = Citation("attestation.pdf", 1)
     return Row("A requirement", PACK, status, stage, evidence)
@@ -142,6 +142,74 @@ def test_the_measurement_holds_no_number_it_was_told():
     assert result.total == len(rows)
     assert sum(result.counts.values()) == result.total
     assert isinstance(result, Measurement)
+
+
+class TestTheTwoPilesAreCountedApart:
+    """`blocking` stays what it was — everything due before the deadline that is
+    not covered. What it gains is a breakdown, because the two halves call for
+    different reactions on different days."""
+
+    def _ligne(self, status, stage):
+        from tender_compliance.coverage import Citation, Row
+        return Row(
+            requirement="x",
+            source=Citation(document="rc.pdf", page=1),
+            status=status,
+            stage=stage,
+            evidence=Citation(document="d", page=1) if status is not Status.MISSING else None,
+        )
+
+    def test_a_missing_candidature_piece_is_fatal(self):
+        m = measure([self._ligne(Status.MISSING, Stage.CANDIDATURE)])
+        assert m.fatal == 1
+        assert m.regularisable == 0
+
+    def test_a_missing_offer_piece_is_correctable(self):
+        m = measure([self._ligne(Status.MISSING, Stage.OFFER)])
+        assert m.fatal == 0
+        assert m.regularisable == 1
+
+    def test_both_still_count_as_blocking(self):
+        # Neither is harmless: both are due before the deadline. The split says
+        # what happens if they are still open on the day, not whether to care.
+        m = measure([
+            self._ligne(Status.MISSING, Stage.CANDIDATURE),
+            self._ligne(Status.MISSING, Stage.OFFER),
+        ])
+        assert m.blocking == 2
+        assert m.total == 2
+
+    def test_a_covered_row_is_neither(self):
+        m = measure([self._ligne(Status.COVERED, Stage.CANDIDATURE)])
+        assert m.fatal == 0 and m.regularisable == 0 and m.blocking == 0
+
+    def test_needs_review_counts_as_open_in_its_own_pile(self):
+        # It is not known to be a problem, which is exactly why it has to be
+        # settled before the deadline rather than after.
+        m = measure([self._ligne(Status.NEEDS_REVIEW, Stage.CANDIDATURE)])
+        assert m.fatal == 1
+
+    def test_performance_rows_stay_out_of_both(self):
+        m = measure([self._ligne(Status.MISSING, Stage.PERFORMANCE)])
+        assert m.fatal == 0 and m.regularisable == 0
+        assert m.total == 0 and m.performance_total == 1
+
+    def test_the_offer_pile_now_counts_towards_the_total(self):
+        """`measure` used to keep only Stage.BID rows.
+
+        Splitting that value in two without inverting the test would have
+        dropped every offer row out of the matrix's own count — the report would
+        have listed rows its header did not know about.
+        """
+        m = measure([self._ligne(Status.MISSING, Stage.OFFER)])
+        assert m.total == 1
+
+    def test_the_headline_names_what_ends_the_bid(self):
+        m = measure([
+            self._ligne(Status.MISSING, Stage.CANDIDATURE),
+            self._ligne(Status.MISSING, Stage.OFFER),
+        ])
+        assert "fatal to the candidature" in m.headline
 
 
 if __name__ == "__main__":

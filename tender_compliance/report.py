@@ -38,7 +38,7 @@ from __future__ import annotations
 import html
 from datetime import date
 
-from tender_compliance.coverage import Row, Status
+from tender_compliance.coverage import Row, Stage, Status
 
 _LABEL = {
     Status.MISSING: "missing",
@@ -153,6 +153,12 @@ h1 {
 }
 .slack.late { color: var(--stamp); }
 
+.pile {
+  font-size: .7rem; letter-spacing: .04em; text-transform: uppercase;
+  padding: .1rem .4rem; border: 1px solid var(--rule); border-radius: 3px;
+  color: var(--muted);
+}
+
 .dropped { margin: 2.6rem 0 0; }
 .dropped h2 {
   font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
@@ -201,6 +207,8 @@ def _row(row: Row) -> str:
     ]
 
     where = [f'<b>{_escape(row.source.document)}</b> p{row.source.page}']
+    if row.stage is Stage.OFFER:
+        where.append('<span class="pile">offre — régularisable</span>')
     if row.evidence:
         where.append(f'→ {_escape(row.evidence.document)} p{row.evidence.page}')
     slack = _slack(row)
@@ -219,6 +227,14 @@ def render(analysis, *, today: date | None = None) -> str:
     today = today or date.today()
     days_left = (analysis.deadline - today).days
     blocking = analysis.counted.blocking if analysis.counted else 0
+    # Deux nombres, parce qu'ils appellent deux réactions à deux moments.
+    # « Les candidatures incomplètes […] sont éliminées » (ANTAI IV.9) contre
+    # « l'acheteur PEUT autoriser […] à régulariser les offres irrégulières »
+    # (DGAC 6.2) : le même papier manquant clôt le dossier d'un côté et invite
+    # une correction de l'autre. Un seul chiffre disait au lecteur de les
+    # traiter pareil, ce qui est faux dans les deux sens.
+    fatal = analysis.counted.fatal if analysis.counted else 0
+    regularisable = analysis.counted.regularisable if analysis.counted else 0
 
     head = [
         "<!doctype html>",
@@ -232,7 +248,8 @@ def render(analysis, *, today: date | None = None) -> str:
         '<dl class="facts">',
         f"<div><dt>Bids due</dt><dd>{analysis.deadline.isoformat()}</dd></div>",
         f"<div><dt>Days left</dt><dd>{days_left}</dd></div>",
-        f"<div><dt>Blocking</dt><dd>{blocking}</dd></div>",
+        f"<div><dt>Ends the bid</dt><dd>{fatal}</dd></div>",
+        f"<div><dt>Correctable</dt><dd>{regularisable}</dd></div>",
         f"<div><dt>Read by</dt><dd>{_escape(analysis.model or 'not recorded')}</dd></div>",
         "</dl>",
     ]

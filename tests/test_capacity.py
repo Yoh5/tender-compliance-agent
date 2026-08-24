@@ -342,7 +342,7 @@ def _capacity_obligation():
     return Obligation(
         text="ne retiendra que les candidats dont le chiffre d'affaires du dernier "
              "exercice disponible est supérieur ou égal à 138 000 000 euros hors taxe.",
-        source=Citation(document="rc.pdf", page=13), stage=Stage.BID,
+        source=Citation(document="rc.pdf", page=13), stage=Stage.CANDIDATURE,
     )
 
 
@@ -351,7 +351,7 @@ def _paper_obligation():
     from tender_compliance.obligations import Obligation
     return Obligation(
         text="Preuve d'une assurance pour les risques professionnels",
-        source=Citation(document="rc.pdf", page=13), stage=Stage.BID,
+        source=Citation(document="rc.pdf", page=13), stage=Stage.CANDIDATURE,
     )
 
 

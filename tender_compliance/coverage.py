@@ -64,8 +64,25 @@ class Status(str, Enum):
 
 
 class Stage(str, Enum):
-    BID = "bid"
+    """When a piece is due — and, for the two bid-time values, what it costs.
+
+    BID was one value until two real files showed it was two. Both are due
+    before the deadline, so both block; they do not block the same way.
+    """
+
+    CANDIDATURE = "candidature"
+    """Due to apply at all. "Les candidatures incomplètes ou demeurées
+    incomplètes à la suite d'une demande de compléments sont éliminées"
+    (ANTAI IV.9, DGAC 5.8). Missing one ends the bid."""
+
+    OFFER = "offer"
+    """Part of the offer itself — acte d'engagement, mémoire technique, RIB.
+    "L'acheteur peut autoriser tous les soumissionnaires concernés à régulariser
+    les offres irrégulières dans un délai approprié" (DGAC 6.2). Missing one is
+    serious and usually recoverable, which is not the same thing."""
+
     PERFORMANCE = "performance"
+    """Owed after award, by the holder of the contract. Not a bid blocker."""
 
 
 # Display order: what blocks the bid first, what is merely uncertain last.
@@ -100,7 +117,7 @@ class Row:
     """Where the tender pack states it."""
 
     status: Status
-    stage: Stage = Stage.BID
+    stage: Stage = Stage.CANDIDATURE
     evidence: Citation | None = None
     """Where the answer was found. `None` for MISSING — and required for
     COVERED, which `check()` enforces."""
@@ -126,6 +143,17 @@ class Measurement:
     blocking: int
     performance_total: int = 0
 
+    fatal: int = 0
+    """Open rows in the candidature pile. These end the bid.
+
+    Split out from `blocking` because the two need different reactions on
+    different days, and a single number told the reader to treat them alike."""
+
+    regularisable: int = 0
+    """Open rows in the offer pile. Serious, and usually recoverable — the buyer
+    may invite a correction (DGAC 6.2). Never presented as harmless: the
+    invitation is the buyer's option, not the bidder's right."""
+
     @property
     def headline(self) -> str:
         """The one line that gets repeated. Built here so it cannot drift from
@@ -141,21 +169,30 @@ class Measurement:
             count = self.counts.get(status, 0)
             if count:
                 parts.append(f"{count} {label}")
+        if self.fatal:
+            parts.append(f"{self.fatal} of them fatal to the candidature")
         return " · ".join(parts)
 
 
 def measure(rows: list[Row]) -> Measurement:
     """Count the matrix. No model, no estimate, no rounding."""
-    bid = [row for row in rows if row.stage is Stage.BID]
-    counts = Counter(row.status for row in bid)
+    avant = [row for row in rows if row.stage is not Stage.PERFORMANCE]
+    counts = Counter(row.status for row in avant)
+
+    def ouvert(row: Row) -> bool:
+        # NEEDS_REVIEW counts as open. It is not known to be a problem, which is
+        # exactly why it has to be settled before the deadline rather than after.
+        return row.status is not Status.COVERED
+
     return Measurement(
-        total=len(bid),
+        total=len(avant),
         counts=dict(counts),
-        # Everything that is not COVERED blocks — NEEDS_REVIEW included. It is
-        # not known to be a problem, which is exactly why it must be settled
-        # before the deadline rather than after it.
         blocking=sum(n for status, n in counts.items() if status is not Status.COVERED),
-        performance_total=len(rows) - len(bid),
+        performance_total=len(rows) - len(avant),
+        fatal=sum(1 for row in avant
+                  if ouvert(row) and row.stage is Stage.CANDIDATURE),
+        regularisable=sum(1 for row in avant
+                          if ouvert(row) and row.stage is Stage.OFFER),
     )
 
 

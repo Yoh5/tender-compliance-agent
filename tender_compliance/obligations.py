@@ -39,10 +39,11 @@ page we read in full stays rejected: there, absence really is evidence.
 INVARIANTS, WRITTEN BEFORE THE CODE
 
 1. Every obligation cites a page. One that cannot be located is not returned.
-2. Bid stage and performance are separated at extraction, while the surrounding
-   text is still available. When context does not settle it, BID wins: a
-   performance obligation wrongly marked blocking costs a pointless check, the
-   other way round costs the tender.
+2. The three piles — candidature, offer, performance — are separated at
+   extraction, while the surrounding text is still available. When context does
+   not settle it, CANDIDATURE wins. A performance obligation wrongly marked
+   blocking costs a pointless check; the other way round costs the tender, and
+   an offer piece wrongly filed as candidature only costs a day of worry.
 3. The model never merges or deduplicates. Two obligations that look like one
    are two rows, each with its page.
 """
@@ -140,6 +141,35 @@ Reporting those as missing is the failure this project keeps circling: noise
 that makes a reader stop trusting the gaps that are real.
 """
 
+_OFFER = re.compile(
+    r"\b(?:acte\s+d['’]engagement"
+    r"|m[ée]moire\s+technique"
+    r"|annexe\s+financi[èe]re"
+    r"|bordereau\s+(?:de\s+prix|des\s+prix)"
+    r"|\bDPGF\b|\bDQE\b|\bBPU\b"
+    r"|relev[ée]\s+d['’]identit[ée]\s+bancaire|\bRIB\b"
+    r"|d[ée]composition\s+du\s+prix)",
+    re.IGNORECASE,
+)
+"""Pieces that belong to the OFFER, not to the candidature.
+
+Taken from the list the DGAC file sets out at article 6.1 — "L'offre du candidat
+comporte les pièces suivantes : L'acte d'engagement […] Le mémoire technique
+[…] Le RIB du candidat".
+
+The distinction is not filing. It is the penalty:
+
+    "Les candidatures incomplètes ou demeurées incomplètes à la suite d'une
+     demande de compléments sont éliminées."            — ANTAI IV.9, DGAC 5.8
+
+    "l'acheteur peut autoriser tous les soumissionnaires concernés à
+     régulariser les offres irrégulières dans un délai approprié"  — DGAC 6.2
+
+The same missing paper ends the bid in one pile and invites a correction in the
+other. A report that shows one number for both tells the reader to treat them
+alike, which is wrong in whichever direction they choose.
+"""
+
 _PERFORMANCE = re.compile(
     r"\b(?:le\s+titulaire|pendant\s+(?:toute\s+)?l['’]exécution|"
     r"en\s+cours\s+d['’]exécution|durée\s+du\s+marché|chaque\s+mois|mensuel)",
@@ -159,7 +189,8 @@ class Proposal:
     text: str
     page: int
     stage: Stage | None = None
-    """None means the model would not commit. Invariant 2 resolves it to BID."""
+    """None means the model would not commit. Invariant 2 resolves it to
+    CANDIDATURE — the pile whose omission ends the bid."""
 
 
 @dataclass(frozen=True)
@@ -214,7 +245,7 @@ class Extraction:
 
     @property
     def blocking(self) -> list[Obligation]:
-        return [o for o in self.obligations if o.stage is Stage.BID]
+        return [o for o in self.obligations if o.stage is Stage.CANDIDATURE]
 
     @property
     def needing_review(self) -> list[Obligation]:
@@ -288,16 +319,30 @@ def max_age_months(text: str) -> int | None:
 
 
 def classify(text: str, proposed: Stage | None) -> Stage:
-    """Bid stage unless the wording clearly points at contract performance.
+    """Which pile this piece belongs to.
 
-    Invariant 2: when nothing settles it, BID. The two errors are not
-    symmetrical — one wastes a check, the other loses the tender.
+    Performance first — that is the only value which does not block the bid, so
+    it is the one worth being sure about. Then the offer, recognised by the
+    pieces a French consultation file actually lists under "L'offre du candidat
+    comporte". Everything else is candidature.
+
+    CANDIDATURE IS THE DEFAULT, AND THE DEFAULT IS THE POINT
+
+    The three errors cost different amounts. Filing a candidature piece as an
+    offer piece tells the bidder it can be corrected later — it cannot, they are
+    eliminated. Filing an offer piece as candidature costs a needless day of
+    worry. Filing either as performance drops it out of the blockers entirely,
+    which is the worst of the three.
+
+    So doubt resolves upward, towards the pile that ends the bid.
     """
     if _PERFORMANCE.search(text):
         return Stage.PERFORMANCE
     if proposed is Stage.PERFORMANCE:
         return Stage.PERFORMANCE
-    return Stage.BID
+    if _OFFER.search(text):
+        return Stage.OFFER
+    return Stage.CANDIDATURE
 
 
 def enrich(proposal: Proposal, document: str) -> Obligation:

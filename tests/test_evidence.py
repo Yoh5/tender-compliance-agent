@@ -53,7 +53,7 @@ def deadline(library_and_deadline):
 def obligation(text="Preuve d'une assurance pour les risques professionnels", **kwargs):
     defaults = dict(
         source=Citation(document="rc.pdf", page=5),
-        stage=Stage.BID,
+        stage=Stage.CANDIDATURE,
     )
     defaults.update(kwargs)
     return Obligation(text=text, **defaults)

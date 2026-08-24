@@ -239,13 +239,13 @@ class TestStageIsDecidedAtExtraction:
             is Stage.PERFORMANCE
 
     def test_silence_from_the_model_means_bid(self):
-        assert classify("Le candidat produit une attestation d'assurance", None) is Stage.BID
+        assert classify("Le candidat produit une attestation d'assurance", None) is Stage.CANDIDATURE
 
     def test_the_text_overrides_a_model_that_says_bid(self):
         # The wording is the document; the model's opinion is not.
         assert classify(
             "pendant toute l'exécution du marché, le titulaire maintient son assurance",
-            Stage.BID,
+            Stage.CANDIDATURE,
         ) is Stage.PERFORMANCE
 
     def test_a_model_may_still_raise_performance_on_its_own(self):
@@ -358,6 +358,63 @@ class TestFormsAreNotDocuments:
             clean,
         )
         assert result.obligations[0].to_produce is False
+
+
+class TestWhichPileAPieceBelongsTo:
+    """Two real files, two penalties for the same missing paper.
+
+        "Les candidatures incomplètes ou demeurées incomplètes à la suite d'une
+         demande de compléments sont éliminées."        — ANTAI IV.9, DGAC 5.8
+
+        "l'acheteur peut autoriser tous les soumissionnaires concernés à
+         régulariser les offres irrégulières dans un délai approprié"  — DGAC 6.2
+
+    A single "blocking" count told the reader to treat both alike.
+    """
+
+    @pytest.mark.parametrize("text", [
+        # Quoted from article 6.1 of the DGAC file, which lists the offer.
+        "L'acte d'engagement complété, daté et signé électroniquement",
+        "Le mémoire technique détaillé",
+        "son annexe financière auquel le candidat soumissionne",
+        "Le RIB du candidat",
+        "Le bordereau des prix unitaires",
+    ])
+    def test_the_offer_pile_is_recognised(self, text):
+        assert classify(text, None) is Stage.OFFER
+
+    @pytest.mark.parametrize("text", [
+        "Lettre de candidature ou formulaire DC1",
+        "Preuve d'une assurance pour les risques professionnels",
+        "Une déclaration sur l'honneur relative aux motifs d'exclusion",
+        "Pièces relatives au pouvoir des personnes habilitées à engager le candidat",
+    ])
+    def test_everything_else_is_candidature(self, text):
+        assert classify(text, None) is Stage.CANDIDATURE
+
+    def test_performance_still_wins_over_both(self):
+        # It is the only value that does not block the bid, so it is the one
+        # worth being sure about.
+        assert classify(
+            "Pendant toute l'exécution du marché, le titulaire remet un mémoire "
+            "technique actualisé", None,
+        ) is Stage.PERFORMANCE
+
+    def test_doubt_resolves_towards_the_pile_that_ends_the_bid(self):
+        """The asymmetry that decides the default.
+
+        Filing a candidature piece as an offer piece tells the bidder it can be
+        corrected later — it cannot, they are eliminated. The reverse costs a
+        day of worry. So an unrecognised piece is candidature.
+        """
+        assert classify("Un document que personne n'a prévu", None) is Stage.CANDIDATURE
+
+    def test_the_flag_survives_verification(self, clean):
+        result = verify(
+            [Proposal(text="L'acte d'engagement complété, daté et signé", page=7)],
+            clean,
+        )
+        assert result.obligations[0].stage is Stage.OFFER
 
 
 def test_the_overlap_threshold_stays_in_the_range_the_files_justify():

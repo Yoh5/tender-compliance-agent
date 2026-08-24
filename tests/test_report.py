@@ -25,7 +25,7 @@ def row(status=Status.MISSING, **kwargs):
         requirement="Preuve d'une assurance pour les risques professionnels",
         source=Citation(document="rc.pdf", page=5),
         status=status,
-        stage=Stage.BID,
+        stage=Stage.CANDIDATURE,
     )
     base.update(kwargs)
     return Row(**base)
@@ -155,11 +155,33 @@ class TestWhatTheReaderIsToldFirst:
         assert "2026-10-09" in page
         assert str((DEADLINE - TODAY).days) in page
 
-    def test_the_blocking_count_is_stated(self):
-        rows = [row(status=Status.MISSING), row(status=Status.COVERED,
-                                                evidence=Citation("Kbis", 1))]
+    def test_the_two_piles_are_counted_separately(self):
+        """This test used to assert a single "Blocking" figure.
+
+        One number told the reader to treat both piles alike, and they are not
+        alike: "Les candidatures incomplètes […] sont éliminées" (ANTAI IV.9)
+        against "l'acheteur peut autoriser […] à régulariser les offres
+        irrégulières" (DGAC 6.2). The same missing paper ends the bid in one
+        pile and invites a correction in the other.
+        """
+        rows = [
+            row(status=Status.MISSING, stage=Stage.CANDIDATURE),
+            row(status=Status.MISSING, stage=Stage.OFFER),
+            row(status=Status.COVERED, evidence=Citation("Kbis", 1)),
+        ]
         page = render(analysis(rows), today=TODAY)
-        assert "Blocking" in page
+        assert "Ends the bid" in page
+        assert "Correctable" in page
+
+    def test_an_offer_row_says_so_on_the_row_itself(self):
+        # Without the badge the row reads as a candidature piece, and the
+        # header count has nothing a reader can trace it back to.
+        page = render(analysis([row(stage=Stage.OFFER)]), today=TODAY)
+        assert "régularisable" in page
+
+    def test_a_candidature_row_carries_no_such_badge(self):
+        page = render(analysis([row(stage=Stage.CANDIDATURE)]), today=TODAY)
+        assert "régularisable" not in page
 
     def test_unreadable_pages_are_flagged_above_the_matrix(self):
         page = render(analysis(unreadable="part of the text is stored as images "

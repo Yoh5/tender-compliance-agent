@@ -181,7 +181,7 @@ class TestItRefusesToPrintWhatItCannotShow:
         from tender_compliance.coverage import Citation, Row, Stage
 
         bad = Row(requirement="x", source=Citation(document="rc.pdf", page=1),
-                  status=Status.COVERED, stage=Stage.BID, evidence=None)
+                  status=Status.COVERED, stage=Stage.CANDIDATURE, evidence=None)
         monkeypatch.setattr(module, "build_rows", lambda *a, **k: [bad])
 
         with pytest.raises(ReportError, match="cannot show"):
@@ -194,7 +194,7 @@ class TestItRefusesToPrintWhatItCannotShow:
         from tender_compliance.coverage import Citation, Row, Stage
 
         bad = Row(requirement="assurance décennale", source=Citation("rc.pdf", 1),
-                  status=Status.COVERED, stage=Stage.BID, evidence=None)
+                  status=Status.COVERED, stage=Stage.CANDIDATURE, evidence=None)
         monkeypatch.setattr(module, "build_rows", lambda *a, **k: [bad])
 
         with pytest.raises(ReportError) as error:
@@ -337,7 +337,7 @@ def _obligation(text):
     from tender_compliance.coverage import Citation, Stage
     from tender_compliance.obligations import Obligation
     return Obligation(text=text, source=Citation(document="rc.pdf", page=5),
-                      stage=Stage.BID)
+                      stage=Stage.CANDIDATURE)
 
 
 def test_the_pipeline_never_emits_a_row_it_cannot_defend(clean, library_and_deadline):
