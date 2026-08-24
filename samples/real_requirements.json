@@ -252,7 +252,7 @@
     {
       "gap": "An obligation can be two words.",
       "detail": "'DC1, DC2' is a complete requirement. An extractor built on sentences walks past it.",
-      "answer": "Not built yet — a constraint on obligations.py, recorded before writing it."
+      "answer": "obligations.SHORT_QUOTE_WORDS — at or below four words every word must be present rather than a share, because 0.6 of two words is one word and one word matches almost any page of these documents."
     },
     {
       "gap": "Time windows apply to content, not only to certificates.",
@@ -267,12 +267,12 @@
     {
       "gap": "Candidature and offre are two piles with different penalties.",
       "detail": "An incomplete candidature is eliminated (ANTAI IV.9, DGAC 5.8). An irregular offer may be regularised (DGAC 6.2). The same missing paper is fatal in one pile and fixable in the other.",
-      "answer": "Not built yet. Stage currently has BID and PERFORMANCE; BID needs splitting, and severity must follow the pile."
+      "answer": "Stage.CANDIDATURE / Stage.OFFER, recognised from the pieces article 6.1 of the DGAC file lists. measure() counts them apart (fatal vs regularisable) and the report shows both numbers and badges the row."
     },
     {
       "gap": "An obligation can be conditional.",
       "detail": "'L'attestation de l'Administration fiscale en cas de non-assujettissement à la TVA', 'le cas échéant le DC4', 'ou, à défaut, la copie du ou des jugements'. These do not apply to every bidder. Reporting them MISSING is noise, and noise is how a report stops being read.",
-      "answer": "Not built yet. An obligation needs a predicate, and an inapplicable one needs a verdict distinct from both COVERED and MISSING."
+      "answer": "obligations._CONDITIONAL sets the flag, and evidence._nothing_found routes a conditional obligation with nothing found to NEEDS_REVIEW rather than MISSING — it may not concern this bidder at all."
     },
     {
       "gap": "The buyer may already hold the proof.",
@@ -289,5 +289,6 @@
       "detail": "DGAC 5.4 asks for global turnover AND the turnover relating to the subject of the contract, over the same three years. A profile holding one turnover series per year cannot answer it.",
       "answer": "Not built yet. capacity.Profile needs a second turnover series, or Measure needs a qualifier."
     }
-  ]
+  ],
+  "_a_note_on_this_list": "The `answer` field says what was built, or that nothing was. Three entries said \"Not built yet\" after they had been built — a list of gaps that drifts is worse than no list, because it is read as a plan."
 }
