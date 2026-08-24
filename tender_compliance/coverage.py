@@ -124,6 +124,12 @@ class Row:
 
     note: str = ""
 
+    points: str = ""
+    """What this row earns or forgoes on the buyer's grid ("2/2").
+
+    Empty for the ordinary case — most requirements are pass/fail, and printing
+    a grade where the buyer stated none would invent one."""
+
     slack: int | None = None
     """Days between the evidence expiring and bids being due. Negative means it
     lapses first.

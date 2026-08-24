@@ -259,6 +259,7 @@ def capacity_row(obligation: Obligation, threshold, company) -> Row:
         status=verdict.status,
         evidence=None,
         note=verdict.explanation,
+        points=threshold.points_if_met,
     )
 
 

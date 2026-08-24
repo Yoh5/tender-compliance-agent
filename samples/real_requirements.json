@@ -247,7 +247,7 @@
     {
       "gap": "Buyers grade, they do not only admit.",
       "detail": "'si x est strictement supérieur à 3 124 998 d'euros HT : 2/2' is a scoring grid. A bidder can be admissible and still lose points.",
-      "answer": "Not built yet. A capacity result should carry the score, not just a status."
+      "answer": "capacity.read_threshold reads the grade from the buyer's own sentence (\"si x est strictement supérieur à 3 124 998 d'euros HT : 2/2\") and assess() states both directions — \"scores 2/2\" when the threshold is met, \"forgoes 2/2\" when it is not. The pattern demands the colon: \"n/n\" appears eighteen times across the two consultation files with zero grids among them — page footers and regulation references. A false positive would promise a grade nobody offered."
     },
     {
       "gap": "An obligation can be two words.",

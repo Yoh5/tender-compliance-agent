@@ -173,6 +173,26 @@ class TestWhatTheReaderIsToldFirst:
         assert "Ends the bid" in page
         assert "Correctable" in page
 
+    def test_a_graded_row_shows_what_it_earns(self):
+        page = render(analysis([row(status=Status.COVERED, points="2/2",
+                                    evidence=Citation("Bilans", 1))]), today=TODAY)
+        assert "obtient 2/2" in page
+
+    def test_and_a_missed_one_shows_what_it_costs(self):
+        # « si x est strictement supérieur à 3 124 998 d'euros HT : 2/2 ». Sous
+        # le seuil, le candidat n'est pas toujours éliminé — il perd des points,
+        # et le verdict seul ne le dit pas.
+        page = render(analysis([row(status=Status.MISSING, points="2/2")]),
+                      today=TODAY)
+        assert "perd 2/2" in page
+        assert "grade lost" in page
+
+    def test_an_ungraded_row_shows_no_grade(self):
+        # La plupart des exigences sont binaires. Afficher une note là où
+        # l'acheteur n'en a énoncé aucune reviendrait à l'inventer.
+        page = render(analysis([row(points="")]), today=TODAY)
+        assert "obtient" not in page and "perd" not in page
+
     def test_an_offer_row_says_so_on_the_row_itself(self):
         # Without the badge the row reads as a candidature piece, and the
         # header count has nothing a reader can trace it back to.

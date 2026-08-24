@@ -355,5 +355,103 @@ def _paper_obligation():
     )
 
 
+class TestBuyersGradeTheyDoNotOnlyAdmit:
+    """"si x est strictement supérieur à 3 124 998 d'euros HT : 2/2"
+                              — Ministère de l'éducation nationale, 22-87951
+
+    A bidder can clear every threshold, be perfectly admissible, and still lose
+    on points. A tool that reports only "covered" throws that away.
+    """
+
+    def test_the_grade_is_read_from_the_buyers_sentence(self):
+        threshold = read_threshold(
+            "chiffre d'affaires annuel global moyen sur les trois derniers "
+            "exercices. si x est strictement supérieur à 3 124 998 d'euros "
+            "HT : 2/2"
+        )
+        assert threshold.points_if_met == "2/2"
+
+    def test_a_reference_count_carries_its_grade_too(self):
+        threshold = read_threshold(
+            "Un dossier de références au titre des cinq (5) dernières années. "
+            "si x est supérieur ou égal à 4: 2/2"
+        )
+        assert threshold.points_if_met == "2/2"
+
+    def test_a_requirement_with_no_grid_states_none(self):
+        # ANTAI IV.7 is a gate, not a grid. Printing a grade where the buyer
+        # stated none would invent one.
+        threshold = read_threshold(
+            "ne retiendra que les candidats dont le chiffre d'affaires du "
+            "dernier exercice disponible est supérieur ou égal à 138 000 000 "
+            "euros hors taxe."
+        )
+        assert threshold.points_if_met == ""
+
+    @pytest.mark.parametrize("bruit", [
+        "chiffre d'affaires supérieur à 3 000 000 euros — page 5/14",
+        "chiffre d'affaires supérieur à 3 000 000 euros au sens du règlement "
+        "(ce) n°883/2004 du 29 avril 2004",
+        "chiffre d'affaires supérieur à 3 000 000 euros, règlement 910/2014 du "
+        "parlement européen",
+    ])
+    def test_page_numbers_and_regulations_are_not_grades(self, bruit):
+        """The reason the pattern demands the colon.
+
+        "n/n" is everywhere in these documents. Measured on the two files in
+        samples/real_dce/: eighteen occurrences, zero grids — page footers
+        ("5/14") and regulation references ("n°883/2004", "910/2014"). A false
+        positive here would promise the bidder a grade nobody offered, which is
+        worse than saying nothing.
+        """
+        threshold = read_threshold(bruit)
+        assert threshold is not None
+        assert threshold.points_if_met == ""
+
+    def test_a_met_threshold_says_what_it_earns(self):
+        threshold = read_threshold(
+            "chiffre d'affaires annuel global moyen sur les trois derniers "
+            "exercices strictement supérieur à 1 000 000 d'euros HT : 2/2"
+        )
+        result = assess(threshold, profile(LIBRARY_FILE))
+        assert result.status is Status.COVERED
+        assert "scores 2/2" in result.explanation
+
+    def test_a_missed_threshold_says_what_it_costs(self):
+        # The nuance the whole class exists for: below the bar is not always
+        # elimination. On a graded criterion it costs points, and a bidder who
+        # does not know that does not know what they are playing for.
+        result = assess(TURNOVER_NOTE, profile(LIBRARY_FILE))
+        assert result.status is Status.MISSING
+        assert "forgoes 2/2" in result.explanation
+        assert "short by" in result.explanation      # le chiffre reste
+
+    def test_an_ungraded_threshold_stays_silent_both_ways(self):
+        sans_note = Threshold(Measure.TURNOVER, 138_000_000, 1,
+                              Aggregation.AVERAGE, strict=False)
+        result = assess(sans_note, profile(LIBRARY_FILE))
+        assert "scores" not in result.explanation
+        assert "forgoes" not in result.explanation
+
+    def test_the_grade_reaches_the_matrix_row(self):
+        from tender_compliance.coverage import Citation, Stage
+        from tender_compliance.evidence import capacity_row
+        from tender_compliance.obligations import Obligation
+
+        obligation = Obligation(
+            text="chiffre d'affaires moyen sur les trois derniers exercices "
+                 "strictement supérieur à 3 124 998 d'euros HT : 2/2",
+            source=Citation(document="avis.pdf", page=1), stage=Stage.CANDIDATURE,
+        )
+        row = capacity_row(obligation, TURNOVER_NOTE, profile(LIBRARY_FILE))
+        assert row.points == "2/2"
+
+
+TURNOVER_NOTE = Threshold(
+    measure=Measure.TURNOVER, minimum=3_124_998, window_years=3,
+    aggregation=Aggregation.AVERAGE, strict=True, points_if_met="2/2",
+)
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))

@@ -27,6 +27,22 @@ whether the comparison is strict. It never performs the comparison. Same reason
 as `validity.py`: a model that gets a comparison wrong produces an answer
 indistinguishable from one it gets right, and this one decides admissibility.
 
+BUYERS GRADE, THEY DO NOT ONLY ADMIT
+
+    "si x est strictement supérieur à 3 124 998 d'euros HT : 2/2"
+                                    — Ministère de l'éducation nationale, 22-87951
+
+That is a scoring grid, not a gate. A bidder can clear every threshold, be
+perfectly admissible, and still lose the contract on points — and a tool that
+reports only "covered" throws that away. `points_if_met` carries the grade
+through, so a met threshold says what it earns and a missed one says what it
+costs.
+
+Note where this wording lives: in the NOTICE, not in the consultation file. The
+two règlements in `samples/real_dce/` contain no grid at all — their only "n/n"
+strings are page numbers and regulation references. The pattern is narrow for
+exactly that reason.
+
 THE YOUNG-COMPANY PATH IS NOT A FAILURE
 
     "Pour les candidats dans l'impossibilité, à raison de leur création
@@ -171,14 +187,17 @@ def assess(threshold: Threshold, profile: Profile) -> Assessment:
         return Assessment(Status.COVERED, measured, threshold.minimum, detail)
 
     shortfall = threshold.minimum - measured
-    return Assessment(
-        Status.MISSING,
-        measured,
-        threshold.minimum,
+    detail = (
         f"{_render(measured, threshold.measure)} against "
         f"{_render(threshold.minimum, threshold.measure)} required — short by "
-        f"{_render(shortfall, threshold.measure)}",
+        f"{_render(shortfall, threshold.measure)}"
     )
+    if threshold.points_if_met:
+        # Ce que le candidat perd, et non seulement ce qui lui manque. Sur un
+        # critère noté, être sous le seuil n'élimine pas toujours : ça coûte des
+        # points, et un candidat qui l'ignore ne sait pas ce qu'il joue.
+        detail += f" — forgoes {threshold.points_if_met}"
+    return Assessment(Status.MISSING, measured, threshold.minimum, detail)
 
 
 def _aggregate(window: list[float], how: Aggregation) -> float | None:
@@ -252,6 +271,18 @@ _WINDOW = re.compile(
     r"|(?P<single>\b(?:du|le|au)\s+dernier\s+exercice\b))",
     re.IGNORECASE,
 )
+
+# Le barème, tel que les acheteurs l'écrivent : « si x est strictement supérieur
+# à 3 124 998 d'euros HT : 2/2 ».
+#
+# LE MOTIF EST ÉTROIT, ET C'EST DÉLIBÉRÉ. « n/n » est partout dans ces
+# documents : « 5/14 » en pied de page, « n°883/2004 » en référence
+# réglementaire, « 910/2014 » pour un règlement européen. Vérifié sur les deux
+# RC de samples/real_dce/ : dix-huit occurrences, zéro barème. Exiger le
+# deux-points qui précède la note écarte les trois familles d'un coup, au prix
+# d'un barème écrit autrement — un faux positif ici annoncerait au candidat une
+# note que personne ne lui a promise, ce qui est pire que se taire.
+_BAREME = re.compile(r":\s*(?P<obtenu>\d+(?:[.,]\d+)?)\s*/\s*(?P<total>\d+(?:[.,]\d+)?)\b")
 
 _AVERAGE = re.compile(r"\bmoyen(?:ne)?s?\b", re.I)
 _EACH = re.compile(r"chacun\s+des|pour\s+chaque\s+(?:exercice|ann[ée]e)", re.I)
@@ -327,10 +358,14 @@ def read_threshold(text: str) -> Threshold | None:
 
     strict = bool(_STRICT.search(text)) and not _INCLUSIVE.search(text)
 
+    bareme = _BAREME.search(text)
+    points = bareme.group(0).lstrip(":").strip() if bareme else ""
+
     return Threshold(
         measure=measure,
         minimum=minimum,
         window_years=window,
         aggregation=aggregation,
         strict=strict,
+        points_if_met=points,
     )

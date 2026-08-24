@@ -153,6 +153,12 @@ h1 {
 }
 .slack.late { color: var(--stamp); }
 
+.grade {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: .78rem; font-weight: 600; color: var(--good);
+}
+.grade.lost { color: var(--stamp); }
+
 .pile {
   font-size: .7rem; letter-spacing: .04em; text-transform: uppercase;
   padding: .1rem .4rem; border: 1px solid var(--rule); border-radius: 3px;
@@ -209,6 +215,14 @@ def _row(row: Row) -> str:
     where = [f'<b>{_escape(row.source.document)}</b> p{row.source.page}']
     if row.stage is Stage.OFFER:
         where.append('<span class="pile">offre — régularisable</span>')
+    if row.points:
+        # Un candidat peut être recevable et perdre le marché aux points. Le
+        # verdict seul ne le dit pas ; la note, si.
+        gagne = row.status is Status.COVERED
+        where.append(
+            f'<span class="grade{"" if gagne else " lost"}">'
+            f'{"obtient" if gagne else "perd"} {_escape(row.points)}</span>'
+        )
     if row.evidence:
         where.append(f'→ {_escape(row.evidence.document)} p{row.evidence.page}')
     slack = _slack(row)
