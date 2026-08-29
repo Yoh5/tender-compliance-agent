@@ -58,7 +58,11 @@ Then the sentence the whole project is built on, said slowly:
 **Shot 1** — the test suite. Let it run to green.
 
 > Before anything else: every verdict comes from code that runs with no model,
-> no key and no network. Two hundred and seventy-two tests.
+> no key and no network. Three hundred and seven tests.
+>
+> (Say the number the screen shows. It was « two hundred and seventy-two »
+> here while the suite ran 307 — a figure spoken on camera cannot be
+> corrected afterwards.)
 
 **Shot 2** — the DGAC tender, live, about 16 seconds.
 
