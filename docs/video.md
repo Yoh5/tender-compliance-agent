@@ -9,7 +9,11 @@ the real one, run live — nothing is replayed.
 
 ## Before recording
 
-- [ ] `python -m pytest tests/ -q` → 272 passed. If it does not, stop.
+- [ ] `python -m pytest tests/ -q` → **307 passed, none failed**. The count
+      is a floor, not an equality: it grows every time a test is added, and
+      the number written here was already 272 while the suite ran 307. What
+      matters is that nothing fails, and that the count has not *dropped* —
+      a fall means collection broke, which looks exactly like a leaner suite.
 - [ ] `.env` has a working key. Shot 2 and 4 make real API calls.
 - [ ] Terminal at a size where a full row fits on one line without wrapping.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
