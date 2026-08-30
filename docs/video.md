@@ -82,7 +82,14 @@ expires too soon   Preuve d'une assurance pour les risques professionnels
 **Shot 4** — the real ANTAI file, live, about 40 seconds. Talk over it.
 
 > Ministry of the Interior. IT outsourcing and user support. Thirty-four pages.
-> Bids due the 28th of October. Thirty-nine requirements found, on camera.
+> Bids due the 28th of October. Sixty requirements found, on camera. Forty-nine
+> of them end the bid.
+>
+> (Say what the banner shows. The last recorded run of this file gave
+> 60 obligations — 5 covered, 27 missing, 28 to review, 49 fatal to the
+> candidature, 6 correctable. This line said "thirty-nine" until 2026-08-30,
+> a figure that matched neither file: the DGAC run finds ten. A count spoken
+> on camera cannot be corrected afterwards.)
 
 **Shot 5** — open `out/antai.html`. Three things, in this order:
 
