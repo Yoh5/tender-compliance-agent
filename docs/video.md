@@ -9,10 +9,10 @@ the real one, run live — nothing is replayed.
 
 ## Before recording
 
-- [ ] `python -m pytest tests/ -q` → **329 passed, none failed**. The count is a
+- [ ] `python -m pytest tests/ -q` → **332 passed, none failed**. The count is a
       floor, not an equality: it grows every time a test is added, and this line
       has been stale twice already — 272 written while the suite ran 307, then
-      307 while it ran 329. What matters is that nothing fails, and that the
+      307 while it ran 332. What matters is that nothing fails, and that the
       count has not *dropped*: a fall means collection broke, which looks exactly
       like a leaner suite.
 - [ ] `.env` has a working key. Shot 2 and 4 make real API calls.
@@ -20,8 +20,18 @@ the real one, run live — nothing is replayed.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
 - [ ] Both reports deleted from `out/` so they are produced on camera.
 
-Total live runtime of the two commands is about **55 seconds**. The rest is
+Total live runtime of the two commands is about **a minute**. The rest is
 talking over static screens, which is where the time budget actually goes.
+
+- [ ] **Time your own dry run before the take.** DGAC measured 15 s on
+      2026-09-01; the ANTAI run was not timed on the attempt that succeeded, and
+      the earlier "85 seconds" written in `devpost.md` was never reproduced. The
+      figure depends on the model, the file and the connection — budget the
+      silence from your own dry run, not from this file.
+- [ ] **Be ready to re-run the ANTAI command.** On 2026-09-01 the first attempt
+      failed mid-flight on an API error and the second succeeded. Two chances in
+      two runs is not a reliability claim; it is a reason to have the command
+      ready to fire again rather than to freeze on camera.
 
 ---
 
@@ -63,35 +73,44 @@ Then the sentence the whole project is built on, said slowly:
 >
 > (Do not memorise this number. It was written « two hundred and seventy-two »
 > here while the suite ran 307, and « three hundred and seven » while it ran
-> 329 — twice wrong, twice for the same reason. Read what the terminal shows;
+> 332 — twice wrong, twice for the same reason. Read what the terminal shows;
 > a figure spoken on camera cannot be corrected afterwards.)
 
-**Shot 2** — the DGAC tender, live, about 16 seconds.
+**Shot 2** — the DGAC tender, live. 15 s on 2026-09-01.
 
 **Shot 3** — open `out/dgac.html`. Stop talking. Let them read:
 
 ```
-expires too soon   Preuve d'une assurance pour les risques professionnels
-                   rc_2026SDCRH05.pdf p5 → Attestation d'assurance RC pro p1 · -9 j
+expires too soon   Preuve d'une assurance pour les risques professionnels ;
+                   rc_2026SDCRH05.pdf p5 · → Attestation d'assurance responsabilité
+                   civile professionnelle p1 · -9 j
                    valid today, expired on the submission date
 ```
+
+(Copied from the run of 2026-09-01. The document name here is the library's full
+one — this block said "Attestation d'assurance RC pro", which is not what the
+report prints.)
 
 > Valid today. Expired on the day bids are due. Nine days.
 > Nobody catches that by reading. It is a subtraction, and it costs the tender.
 
 ## 2:05 – 3:05 · Scenario 2 — at full size
 
-**Shot 4** — the real ANTAI file, live, about 40 seconds. Talk over it.
+**Shot 4** — the real ANTAI file, live. Talk over it; time it in your dry
+run rather than trusting a number written here.
 
 > Ministry of the Interior. IT outsourcing and user support. Thirty-four pages.
-> Bids due the 28th of October. Sixty requirements found, on camera. Forty-nine
-> of them end the bid.
+> Bids due the 28th of October. **[read the banner]** requirements found, on
+> camera. **[read the banner]** of them end the bid.
 >
-> (Say what the banner shows. The last recorded run of this file gave
-> 60 obligations — 5 covered, 27 missing, 28 to review, 49 fatal to the
-> candidature, 6 correctable. This line said "thirty-nine" until 2026-08-30,
-> a figure that matched neither file: the DGAC run finds ten. A count spoken
-> on camera cannot be corrected afterwards.)
+> **Do not memorise these two numbers. They move on every run.**
+>
+> Three recorded runs of this same file, same flags: 39 (wrong, and matching no
+> file at all), then 60 — 5 covered, 27 missing, 28 to review, 49 fatal, 6
+> correctable — then, on 2026-09-01, **66 — 8 covered, 33 missing, 1 expired,
+> 24 to review, 51 fatal, 7 correctable**. The model is not deterministic, so
+> the count is a property of the take, not of the file. Read the banner that is
+> on screen in the take you keep.
 
 **Shot 5** — open `out/antai.html`. Three things, in this order:
 
@@ -106,9 +125,22 @@ expires too soon   Preuve d'une assurance pour les risques professionnels
    > tested. The tool refuses to say anything is absent from a file it could not
    > read in full, and it names the pages.
 
-3. The rejected proposal at the bottom.
-   > The model proposed a requirement that is not on the page it cited. It was
-   > rejected, and the report says so.
+3. A "to review" row, and the reason it carries.
+   > This one is not a document to go and find — it is a form to fill in for
+   > this tender. An evidence library cannot answer it, and reporting it missing
+   > would be noise. So it says review, and it says why.
+
+   **This beat replaced "the rejected proposal at the bottom", and the reason
+   matters.** Both runs on 2026-09-01 produced **zero** rejections — the report
+   still knows how to show them (`report.py`), there were simply none. That is
+   consistent with the agent's new `quote_is_on_page` tool doing its job:
+   checking a wording against the page before committing to it, rather than
+   being corrected afterwards.
+
+   Two runs are not proof of that, and the honest version is that we cannot
+   attribute it yet. What is certain is that **you cannot point at a section
+   that is not on screen.** If the take you keep does show a rejection, use the
+   old beat — it is the stronger one.
 
 ## 3:05 – 4:00 · Why it can be trusted
 
@@ -166,8 +198,8 @@ rest is texture.
 **Do not apologise for the "to review" rows.** They are the point. A tool that
 only says covered or missing is a tool that spends its uncertainty on covered.
 
-**Do not speed up the live runs in post.** A judge who sees a real 40-second run
-believes the rest. A jump cut in the middle of a demo invites the opposite.
+**Do not speed up the live runs in post.** A judge who sees a real run at its
+real speed believes the rest. A jump cut in the middle of a demo invites the opposite.
 
 **Do not claim it is finished.** Say what is measured and what is not: the
 scoring grids and group cardinality are recorded in

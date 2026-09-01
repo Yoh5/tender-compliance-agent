@@ -43,8 +43,15 @@ one, because the piles are not alike — an incomplete *candidature* is eliminat
 (ANTAI IV.9), while an irregular *offre* may be invited to correct itself (DGAC
 6.2). The same missing paper ends the bid in one and is recoverable in the other.
 
-On a live run against the real 34-page Ministry of the Interior file: **60
-requirements found, 49 fatal to the candidature, 6 correctable**, in 85 seconds.
+On a live run against the real 34-page Ministry of the Interior file: **66
+requirements found, 51 fatal to the candidature, 7 correctable** — 8 covered, 33
+missing, 1 expired before the deadline, 24 sent for review.
+
+Those counts are from the run of 2026-09-01 and they move: the same file, same
+flags, gave 60 requirements a week earlier. The model is not deterministic, and
+this is the honest version of that. What does not move is what the counts are
+made of — every row is quoted from the tender with its page, and every verdict
+is computed.
 
 It also answers the requirements no document can. Article IV.7 of that tender
 demands turnover of at least **138 000 000 €**. No paper proves a revenue figure —
@@ -85,7 +92,7 @@ afterwards, and a quotation that fails is still rejected. **No tool returns a
 verdict, a date comparison or a score** — a test asserts that over the module's
 own source, because the next tool anyone adds will be added in a hurry.
 
-That is also why **329 tests run with no model, no key and no network** — the
+That is also why **332 tests run with no model, no key and no network** — the
 part that must never be wrong is pure.
 
 The matrix validates itself before printing. A row marked covered that cites no
