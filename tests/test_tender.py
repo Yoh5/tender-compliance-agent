@@ -252,7 +252,10 @@ class TestEvidenceIsAskedInGroups:
             return schema(matches=matches)
 
     def factory(self, log, plan):
-        return lambda: self.FakeAgent(log, plan)
+        # `tools` is accepted and ignored: these tests are about how many calls
+        # the batching makes, not about what the agent may reach for. The real
+        # factory binds the library's readers here — see `tools.library_tools`.
+        return lambda tools=None: self.FakeAgent(log, plan)
 
     def test_five_obligations_take_one_call_not_five(self, library_and_deadline):
         from tender_compliance.tender import evidence_proposer

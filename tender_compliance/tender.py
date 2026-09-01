@@ -214,6 +214,9 @@ Rules:
 """
 
 
+from tender_compliance.tools import library_tools, reading_tools
+
+
 def _batches(items: list, size: int) -> list[list]:
     return [items[index:index + size] for index in range(0, len(items), size)]
 
@@ -246,7 +249,7 @@ def obligation_proposer(agent_factory, pages_per_batch: int = PAGES_PER_BATCH):
             body = "\n\n".join(
                 f"=== PAGE {page.number} ===\n{page.text}" for page in batch
             )
-            answer = agent_factory().structured_output(
+            answer = agent_factory(reading_tools(source)).structured_output(
                 _Answer, f"{_OBLIGATION_BRIEF}\n\n{body}"
             )
             for item in answer.obligations:
@@ -315,7 +318,7 @@ class _EvidenceProposer:
             f"{number}. {' '.join(o.text.split())}"
             for number, o in enumerate(obligations, start=1)
         )
-        answer = self._agent_factory().structured_output(
+        answer = self._agent_factory(library_tools(library)).structured_output(
             self._schema,
             f"{_EVIDENCE_BRIEF}\n\nREQUIREMENTS (answer each by its number; a "
             f"requirement with no answer is simply left out):\n{listing}\n\n"

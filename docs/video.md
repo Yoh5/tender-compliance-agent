@@ -9,11 +9,12 @@ the real one, run live — nothing is replayed.
 
 ## Before recording
 
-- [ ] `python -m pytest tests/ -q` → **307 passed, none failed**. The count
-      is a floor, not an equality: it grows every time a test is added, and
-      the number written here was already 272 while the suite ran 307. What
-      matters is that nothing fails, and that the count has not *dropped* —
-      a fall means collection broke, which looks exactly like a leaner suite.
+- [ ] `python -m pytest tests/ -q` → **329 passed, none failed**. The count is a
+      floor, not an equality: it grows every time a test is added, and this line
+      has been stale twice already — 272 written while the suite ran 307, then
+      307 while it ran 329. What matters is that nothing fails, and that the
+      count has not *dropped*: a fall means collection broke, which looks exactly
+      like a leaner suite.
 - [ ] `.env` has a working key. Shot 2 and 4 make real API calls.
 - [ ] Terminal at a size where a full row fits on one line without wrapping.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
@@ -58,11 +59,12 @@ Then the sentence the whole project is built on, said slowly:
 **Shot 1** — the test suite. Let it run to green.
 
 > Before anything else: every verdict comes from code that runs with no model,
-> no key and no network. Three hundred and seven tests.
+> no key and no network. **[read the count off the screen]** tests.
 >
-> (Say the number the screen shows. It was « two hundred and seventy-two »
-> here while the suite ran 307 — a figure spoken on camera cannot be
-> corrected afterwards.)
+> (Do not memorise this number. It was written « two hundred and seventy-two »
+> here while the suite ran 307, and « three hundred and seven » while it ran
+> 329 — twice wrong, twice for the same reason. Read what the terminal shows;
+> a figure spoken on camera cannot be corrected afterwards.)
 
 **Shot 2** — the DGAC tender, live, about 16 seconds.
 
@@ -121,10 +123,17 @@ expires too soon   Preuve d'une assurance pour les risques professionnels
 > The dashed arrows are what does not get through. That is the product: not that
 > it is clever, but that it cannot quietly be wrong.
 
-One line on Strands, because the rules ask for it:
+One line on Strands, because criterion 1 asks how thoroughly it is used:
 
-> The two agents are built with the Strands Agents SDK, and the deterministic
-> modules are the tools they call.
+> Both agents are built with the Strands Agents SDK, and they have tools: read a
+> page, ask whether a wording is really on it, list the library, ask whether a
+> name is in it. Those are the same checks that run afterwards — so the agent
+> can correct itself before it commits. But it cannot skip them: a tool it never
+> calls changes nothing, because the verification runs either way.
+
+> (This line said "the deterministic modules are the tools they call" until
+> 2026-09-01, when no `@tool` existed anywhere in the repository. A judge reads
+> the code. Say what the code does.)
 
 ## 4:00 – 4:40 · Who it is for, and what it changes
 

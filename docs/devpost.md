@@ -73,10 +73,20 @@ continue:
   a match;
 - dates and thresholds are **arithmetic** and never reach the model at all.
 
-The deterministic modules are the tools the agents call, so the separation is
-enforced by the architecture rather than by discipline. That is also why **307
-tests run with no model, no key and no network** — the part that must never be
-wrong is pure.
+Both agents are built with the Strands Agents SDK, and the checks above are also
+given to them **as Strands tools**: read a page, ask whether a wording really
+appears on it, list the evidence library, ask whether a name is in it. They are
+the same functions the pipeline applies afterwards, so the agent can correct a
+citation before it commits to one.
+
+What the tools deliberately are not is the enforcement. A tool the model never
+calls, or calls and ignores, changes nothing: every proposal is still verified
+afterwards, and a quotation that fails is still rejected. **No tool returns a
+verdict, a date comparison or a score** — a test asserts that over the module's
+own source, because the next tool anyone adds will be added in a hurry.
+
+That is also why **329 tests run with no model, no key and no network** — the
+part that must never be wrong is pure.
 
 The matrix validates itself before printing. A row marked covered that cites no
 evidence is not a formatting problem; it is the tool asserting what it cannot

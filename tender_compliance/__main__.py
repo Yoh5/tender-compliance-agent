@@ -120,11 +120,16 @@ def main(argv: list[str] | None = None) -> int:
 
     model = build(choice)
 
-    def agent_factory():
+    def agent_factory(tools=None):
         # A fresh agent per call: carrying conversation history between batches
         # would let one page be answered partly from another, while the citation
         # still points at the first.
-        return Agent(model=model, callback_handler=None)
+        #
+        # `tools` is bound per phase, not per process: the obligation phase gets
+        # readers for THIS tender, the evidence phase gets readers for THIS
+        # library. A tool that could reach either would let one phase answer
+        # with the other's ground truth.
+        return Agent(model=model, tools=list(tools or []), callback_handler=None)
 
     print(f"reading {source.path.name} ({len(source.pages)} pages) with "
           f"{choice.describe()} …", file=sys.stderr)
