@@ -257,6 +257,64 @@ class TestTheLibrary:
         assert "list_documents" in answer
 
 
+class TestTheAgentsActuallyGetThem:
+    """Wiring, not intention.
+
+    Found by mutation: deleting `reading_tools(source)` from the call site in
+    `tender.py` left all 329 tests green. The tools existed, were tested, were
+    forbidden from judging — and reached no agent. A capability that lives only
+    in its own module is one the judges cannot see run, and one that quietly
+    stops working the next time someone refactors the call.
+
+    So the assertion is on the hand-off, not on the module.
+    """
+
+    class _Fake:
+        """Records nothing, answers with an empty structure."""
+
+        def structured_output(self, schema, prompt):
+            return schema()
+
+    def test_the_obligation_agent_is_handed_the_readers(self, source):
+        from tender_compliance.tender import obligation_proposer
+
+        seen: list[list[str]] = []
+
+        def factory(tools=None):
+            seen.append([t.tool_name for t in (tools or [])])
+            return self._Fake()
+
+        obligation_proposer(factory)(source)
+        assert seen, "the proposer never built an agent"
+        assert set(seen[0]) == {"page_text", "quote_is_on_page"}, seen[0]
+
+    def test_the_evidence_agent_is_handed_the_library(self, library):
+        from tender_compliance.coverage import Citation, Stage
+        from tender_compliance.obligations import Obligation
+        from tender_compliance.tender import evidence_proposer
+
+        seen: list[list[str]] = []
+
+        def factory(tools=None):
+            seen.append([t.tool_name for t in (tools or [])])
+            return self._Fake()
+
+        obligation = Obligation(text="une attestation d'assurance",
+                                source=Citation(document="rc.pdf", page=5),
+                                stage=Stage.CANDIDATURE)
+        evidence_proposer(factory, group_size=5).prepare([obligation], library)
+        assert seen, "the proposer never built an agent"
+        assert set(seen[0]) == {"list_documents", "document_is_in_library"}, seen[0]
+
+    def test_neither_phase_can_reach_the_other_ground_truth(self, source, library):
+        """The obligation agent must not be able to read the library, and vice
+        versa. One phase answering with the other's data is a citation that
+        points at the wrong thing, and nothing downstream would catch it."""
+        reading = {t.tool_name for t in reading_tools(source)}
+        evidence = {t.tool_name for t in library_tools(library)}
+        assert not reading & evidence
+
+
 class TestTheToolsDoNotReplaceTheVerification:
     """The one that matters.
 
