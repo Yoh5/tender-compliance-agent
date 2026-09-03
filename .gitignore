@@ -16,12 +16,14 @@ samples/private/
 *.pdf
 !docs/**/*.pdf
 
-# Exception. The two files under samples/real_dce/ are consultation rules
-# published by French public buyers, freely downloadable by anyone without
-# registration — the buyer's own text, not a bidder's evidence. They are
-# committed because tests/test_extraction.py asserts a claim about them that a
-# reader should be able to check: page 13 of the ANTAI file names a mandatory
-# document that no text extractor returns.
+# Exception. The files under samples/real_dce/ are consultation rules published
+# by public buyers — two French, two English — freely downloadable by anyone
+# without registration: the buyer's own text, not a bidder's evidence. They are
+# committed because the tests assert claims about them that a reader should be
+# able to check: page 13 of the ANTAI file names a mandatory document that no
+# text extractor returns, and not one sentence of the English packs is read as
+# French (nor the reverse), which is what decides whether a translation is
+# printed.
 !samples/real_dce/*.pdf
 
 # Derived from those PDFs in one command; not worth versioning.

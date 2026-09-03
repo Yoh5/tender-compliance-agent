@@ -399,3 +399,64 @@ class TestTheCounterOnTheRealFiles:
         assert len(phrases) > 50, f"only {len(phrases)} sentences — check the split"
         faux = [p for p in phrases if looks_english(p)]
         assert faux == [], f"{len(faux)} of {len(phrases)} classified English: {faux[:3]}"
+
+    # The other direction, on the two English packs. The counts are exact rather
+    # than a percentage, because a percentage hides which sentence moved.
+    #
+    # The single exception in the EFSA file is a digital-signature block —
+    # "deseze@efsa.europa.eu C = IT O = EFSA OU = ASSESS Date: ..." — which is a
+    # distinguished name, not a sentence, and which the counter reads as French
+    # on « ou » and « de ». It is allowed to stay wrong: no requirement is ever
+    # written that way, and the cost of being wrong here is one redundant line.
+    @pytest.mark.parametrize("nom, tolere", [("itt_EP_COMM_2026.pdf", 0),
+                                             ("itt_EFSA_2023.pdf", 1)])
+    def test_the_prose_of_an_english_tender_reads_as_english(self, nom, tolere):
+        phrases = [p for p in self._phrases(nom) if len(p) > 80]
+        assert len(phrases) > 50, f"only {len(phrases)} sentences — check the split"
+        manques = [p for p in phrases if not looks_english(p)]
+        assert len(manques) <= tolere, (
+            f"{len(manques)} of {len(phrases)} sentences would carry a redundant "
+            f"English gloss: {manques[:3]}")
+
+    def test_an_english_pack_asks_for_no_translation_at_all(self):
+        """End to end, on the file rather than on chosen sentences: the rows a
+        run would produce from this pack reach the translator empty-handed."""
+        from tender_compliance.coverage import Citation, Row, Status
+
+        phrases = [p for p in self._phrases("itt_EP_COMM_2026.pdf") if len(p) > 80]
+        rows = [Row(requirement=p, source=Citation(document="itt.pdf", page=1),
+                    status=Status.MISSING) for p in phrases]
+        appels = []
+
+        def compte(textes):
+            appels.append(list(textes))
+            return list(textes)
+
+        assert attach(rows, compte) == rows
+        assert appels == [], f"{len(appels[0])} English lines sent to be translated"
+
+
+class TestLinksAreNotProse:
+    """A URL is not written in any language, and it votes.
+
+    `.../budget/explained/management/protecting/protect_en.cfm` tokenises into a
+    dozen words, one of which is « en ». That single fragment was enough to drag
+    an English sentence back over the line, and these files are full of links —
+    the French DC1 requirement carries `economie.gouv.fr` inside the sentence
+    that states it. Addresses are stripped before anything is counted.
+    """
+
+    def test_an_english_sentence_ending_in_a_url_is_still_english(self):
+        assert looks_english(
+            "For more information, see the Privacy Statement on "
+            "http://ec.europa.eu/budget/explained/management/protecting/protect_en.cfm")
+
+    def test_a_french_requirement_carrying_a_url_is_still_french(self):
+        assert not looks_english(
+            "Lettre de candidature ou formulaire DC1 (téléchargeable à partir du "
+            "lien https://www.economie.gouv.fr/daj/formulaires-declaration-candidat)")
+
+    def test_an_email_address_does_not_vote_either(self):
+        assert looks_english(
+            "The tenderer shall send the signed form to the address "
+            "procurement.de.la@example.eu before the deadline stated above.")

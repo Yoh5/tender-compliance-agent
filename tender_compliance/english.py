@@ -92,6 +92,17 @@ def attach(rows: list, translate: Translate) -> list:
 
 _MOT = _re.compile(r"[^\W\d_]+", _re.UNICODE)
 
+_ADRESSE = _re.compile(r"\S+@\S+|(?:https?://|www\.)\S+", _re.IGNORECASE)
+"""URLs and email addresses, removed before a single word is counted.
+
+They are not written in any language, and they vote: the path
+`/budget/explained/management/protecting/protect_en.cfm` tokenises into a dozen
+words, one of which is « en ». That was enough to drag a plainly English
+sentence back across the line. These files are full of links — the French DC1
+requirement carries `economie.gouv.fr` inside the sentence that states it — so
+this is the common case, not the exotic one.
+"""
+
 _ANGLAIS = frozenset("""
 the of and to in for by is are be been shall must that this these those with
 which not any all from will have has at as its their our your if when where
@@ -126,7 +137,7 @@ def looks_english(text: str) -> bool:
     False whenever the evidence is thin — a form code, a date, a bare reference
     — and English has to be shown rather than assumed.
     """
-    mots = [m.lower() for m in _MOT.findall(text or "")]
+    mots = [m.lower() for m in _MOT.findall(_ADRESSE.sub(" ", text or ""))]
     anglais = sum(1 for m in mots if m in _ANGLAIS)
     francais = sum(1 for m in mots if m in _FRANCAIS or m in _ELISIONS)
     return anglais >= 2 and anglais > 2 * francais
