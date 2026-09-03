@@ -197,7 +197,7 @@ consultation files are real, public, and committed so the claims can be checked.
 
     git clone https://github.com/Yoh5/tender-compliance-agent
     python -m pip install -r requirements.txt
-    python -m pytest tests/ -q          # 307 tests, no key, no network
+    python -m pytest tests/ -q          # the whole suite: no key, no network
 
     cp .env.example .env                # add ONE model key
     python -m tender_compliance samples/real_dce/rc_ANTAI_2026.pdf \

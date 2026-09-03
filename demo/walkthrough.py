@@ -56,8 +56,13 @@ SHOTS = [
         "Open out/antai.html",
         "Say three things, in this order: the turnover floor — 2.39 million "
         "against 138 million required, short by 135.61 — then the banner saying "
-        "twenty-seven pages are stored as images and cannot be read, then the "
-        "rejected proposal at the bottom. The tool says what it could not do.",
+        "twenty-seven pages are stored as images and cannot be read, then one "
+        "'to review' row and the reason it carries: a form written for this "
+        "tender, which no evidence library can hold. The tool says what it "
+        "could not do. (This last beat used to be 'the rejected proposal at "
+        "the bottom'. Both runs of 2026-09-01 produced zero rejections, and "
+        "you cannot point at a section that is not on screen. If the take you "
+        "keep does show one, use it instead — it is the stronger beat.)",
         None,
     ),
     (

@@ -252,7 +252,7 @@ are demanded "less than 6 months old".
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pytest tests/ -q                    # 307 tests, no key, no network
+python -m pytest tests/ -q                    # whole suite, no key, no network
 
 cp .env.example .env                          # add ONE model key
 python -m tender_compliance samples/real_dce/rc_ANTAI_2026.pdf \

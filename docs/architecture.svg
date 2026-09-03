@@ -1,11 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 560" width="1180" height="560"
      font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" role="img"
-     aria-label="Architecture: the model proposes on the upper band, deterministic code decides on the lower band, and every path from left to right passes through the lower band.">
+     aria-label="Architecture: the model proposes on the upper band, deterministic code decides on the lower band, every agent is given the same checks as Strands tools, and every path from left to right passes through the lower band.">
   <title>Tender Compliance Agent — architecture</title>
   <desc>A consultation PDF is read by extraction.py. Twice, a Strands agent proposes
   something — obligations, then matching evidence — and each proposal is checked by
   deterministic code before it may continue. Dates and thresholds are arithmetic. The
-  matrix validates itself and refuses to print a claim it cannot show.</desc>
+  matrix validates itself and refuses to print a claim it cannot show. Each agent also
+  receives those same checks as Strands tools, so it can correct a citation before committing
+  to it; the verification below runs either way, whether the tool was called or ignored.</desc>
 
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -22,7 +24,7 @@
   <text x="40" y="68" font-size="13.5" fill="#5b6880">The model observes. The code decides. Nothing reaches the matrix without being checked against the document.</text>
 
   <!-- ============ band: model ============ -->
-  <rect x="40" y="100" width="1100" height="104" rx="4" fill="#eef2f8" stroke="#ccd6e4"/>
+  <rect x="40" y="100" width="1100" height="128" rx="4" fill="#eef2f8" stroke="#ccd6e4"/>
   <text x="56" y="122" font-size="10.5" letter-spacing="1.6" fill="#5b6880">THE MODEL PROPOSES — STRANDS AGENTS SDK</text>
 
   <g fill="#ffffff" stroke="#8a97ad" stroke-width="1.2">
@@ -38,9 +40,21 @@
     <text x="805" y="173">document name, 5 requirements per call</text>
   </g>
 
+  <!-- the same checks, handed to the agent as @tool so it can correct itself first -->
+  <g fill="#f6f8fb" stroke="#8a97ad" stroke-width="1.2" stroke-dasharray="4 3">
+    <rect x="340" y="188" width="210" height="32" rx="4"/>
+    <rect x="700" y="188" width="210" height="32" rx="4"/>
+  </g>
+  <g font-size="10" fill="#5b6880" text-anchor="middle">
+    <text x="445" y="202">@tool  page_text</text>
+    <text x="445" y="214">@tool  quote_is_on_page</text>
+    <text x="805" y="202">@tool  list_documents</text>
+    <text x="805" y="214">@tool  document_is_in_library</text>
+  </g>
+
   <!-- ============ band: code ============ -->
   <rect x="40" y="264" width="1100" height="116" rx="4" fill="#e7ecf4" stroke="#ccd6e4"/>
-  <text x="56" y="286" font-size="10.5" letter-spacing="1.6" fill="#5b6880">THE CODE DECIDES — NO MODEL, NO NETWORK, 272 TESTS</text>
+  <text x="56" y="286" font-size="10.5" letter-spacing="1.6" fill="#5b6880">THE CODE DECIDES — NO MODEL, NO NETWORK, NO KEY</text>
 
   <g fill="#ffffff" stroke="#14203a" stroke-width="1.4">
     <rect x="60" y="298" width="200" height="64" rx="4"/>
@@ -88,9 +102,9 @@
   <g stroke="#5b6880" stroke-width="1.6" fill="none" marker-end="url(#a)">
     <path d="M160 430 L160 366"/>
     <path d="M260 316 L330 316 L330 174 L336 174"/>
-    <path d="M445 192 L445 294"/>
+    <path d="M445 220 L445 294"/>
     <path d="M550 316 L620 316 L620 174 L696 174"/>
-    <path d="M805 192 L805 294"/>
+    <path d="M805 220 L805 294"/>
     <path d="M805 430 L805 384 L690 384 L690 340 L696 340"/>
     <path d="M910 330 L956 330"/>
     <path d="M1050 366 L1050 420"/>
