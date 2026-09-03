@@ -340,3 +340,29 @@ class TestWhatTheCounterCallsEnglish:
     def test_it_ignores_case_and_punctuation(self):
         assert self.looks_english("THE TENDERER SHALL PROVIDE THE CERTIFICATE.")
         assert not self.looks_english("LES CANDIDATURES INCOMPLÈTES SONT ÉLIMINÉES.")
+
+
+class TestFrenchThatQuotesEnglish:
+    """The case that defeats a naive counter, and the reason for the ratio.
+
+    These files quote English clause titles, product names and licence terms
+    inside French sentences. A rule that says "two English function words means
+    English" calls those lines English and drops the gloss on exactly the rows a
+    reader most needs it for. Both tests below pass under the real rule and fail
+    under the tempting simpler ones — which is why they are here.
+    """
+
+    def test_a_french_sentence_quoting_an_english_clause_stays_french(self):
+        # Five English function words — the, shall, be, for, all — inside an
+        # ordinary French requirement. Counting them alone would flip it.
+        phrase = ("Le candidat joint la clause « The supplier shall be liable "
+                  "for all damages » traduite en français.")
+        assert not looks_english(phrase)
+
+    def test_elisions_are_what_keeps_a_sparse_french_line_french(self):
+        # Barely any French function words survive here: « d' » and « un ». The
+        # elided d is half of the evidence, and without counting it this line
+        # reads as English on three borrowed words.
+        phrase = ("Copie d'un contrat-cadre intitulé « Master Services "
+                  "Agreement for the supply of licences »")
+        assert not looks_english(phrase)
