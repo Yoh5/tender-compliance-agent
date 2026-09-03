@@ -11,6 +11,11 @@ a citation.
 But a reader who does not read French sees a verdict and an opaque sentence. So
 each row carries a translation *beside* the quotation, never instead of it.
 
+A row already written in English carries none: printing the same sentence twice
+is not a service. That is decided per row rather than per file, because a pack
+that quotes an English annex inside a French règlement is one file with two
+languages in it, and the reader meets them one after another.
+
 WHY IT RUNS LAST, AND SEPARATELY
 
 The obvious implementation asks the extraction agent for a translation while it
@@ -31,6 +36,7 @@ lost bid.
 
 from __future__ import annotations
 
+import re as _re
 from dataclasses import replace
 from typing import Callable, Sequence
 
@@ -60,16 +66,70 @@ def attach(rows: list, translate: Translate) -> list:
     if not rows:
         return rows
 
+    # Ligne par ligne, pas fichier par fichier : un dossier qui cite une annexe
+    # anglaise dans un règlement français est un fichier avec deux langues
+    # dedans, et le lecteur les rencontre l'une après l'autre.
+    a_traduire = [(rang, row.requirement) for rang, row in enumerate(rows)
+                  if not looks_english(row.requirement)]
+    if not a_traduire:
+        return rows
+
     try:
-        traduites = translate([row.requirement for row in rows])
+        traduites = translate([texte for _, texte in a_traduire])
     except Exception:
         return rows
 
-    if not isinstance(traduites, (list, tuple)) or len(traduites) != len(rows):
+    if not isinstance(traduites, (list, tuple)) or len(traduites) != len(a_traduire):
         return rows
 
-    return [replace(row, gloss=" ".join(str(t).split()))
-            for row, t in zip(rows, traduites)]
+    gloses = {rang: " ".join(str(t).split())
+              for (rang, _), t in zip(a_traduire, traduites)}
+    return [replace(row, gloss=gloses[rang]) if rang in gloses else row
+            for rang, row in enumerate(rows)]
+
+
+# ---------------------------------------------------------------- the counter
+
+_MOT = _re.compile(r"[^\W\d_]+", _re.UNICODE)
+
+_ANGLAIS = frozenset("""
+the of and to in for by is are be been shall must that this these those with
+which not any all from will have has at as its their our your if when where
+who whose than then such each may can should would upon into within without
+under over before after during including provided both between during other
+""".split())
+
+_FRANCAIS = frozenset("""
+le la les un une des du de et ou au aux dans pour par sur est sont qui que ne
+pas ce cette ces son sa ses leur leurs avec sans sous chaque tout tous toute
+toutes plus moins lors dont ainsi doit doivent peut peuvent etre être avoir
+cas si en aucun aucune celui celle ceux mais donc
+""".split())
+
+_ELISIONS = frozenset("d l qu n s j m t c".split())
+"""What an apostrophe leaves behind: « d'une », « l'honneur », « qu'il ». These
+are French by construction — English does not elide like this — and they survive
+tokenising, so they are worth counting."""
+
+
+def looks_english(text: str) -> bool:
+    """True when this requirement is already in English and needs no gloss.
+
+    Decided here, in code, from the words themselves. Asking the model which
+    language it is looking at would hand it the decision about what the reader
+    sees, and this is precisely the sort of call that does not need one:
+    function words separate the two languages sharply, and a counter can be
+    read, tested, and disagreed with.
+
+    THE ASYMMETRY IS DELIBERATE. A missing gloss makes a row unreadable to the
+    audience it was added for; a redundant one is clutter. So the answer is
+    False whenever the evidence is thin — a form code, a date, a bare reference
+    — and English has to be shown rather than assumed.
+    """
+    mots = [m.lower() for m in _MOT.findall(text or "")]
+    anglais = sum(1 for m in mots if m in _ANGLAIS)
+    francais = sum(1 for m in mots if m in _FRANCAIS or m in _ELISIONS)
+    return anglais >= 2 and anglais > 2 * francais
 
 
 def translator(agent_factory) -> Translate:

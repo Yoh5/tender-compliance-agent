@@ -136,7 +136,9 @@ class Row:
     Decoration, and deliberately last: it is written after every verdict exists,
     it is shown beside the quotation and never instead of it, and nothing in
     this package reads it. `english.attach` is the only writer. Empty whenever
-    the translation did not arrive, which the report treats as ordinary.
+    the translation did not arrive — and empty by design when the requirement is
+    already in English, where a gloss would print the same sentence twice. The
+    report treats both cases as ordinary.
     """
 
     slack: int | None = None

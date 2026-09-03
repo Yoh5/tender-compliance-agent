@@ -17,7 +17,7 @@ from dataclasses import replace
 import pytest
 
 from tender_compliance.coverage import Citation, Row, Stage, Status
-from tender_compliance.english import attach, translator
+from tender_compliance.english import attach, looks_english, translator
 
 EXIGENCE = "Preuve d'une assurance pour les risques professionnels ;"
 GLOSE = "Proof of professional indemnity insurance"
@@ -226,3 +226,117 @@ class TestTheGlossActuallyReachesTheRun:
         texte = render_text(Analysis(document="rc.pdf", deadline=date(2026, 10, 9),
                                      rows=lignes, counted=measure(lignes)))
         assert " EN " not in texte
+
+
+ANGLAIS = ("The tenderer shall provide proof of professional indemnity "
+           "insurance valid on the date of submission.")
+
+
+class TestARequirementAlreadyInEnglishIsLeftAlone:
+    """A translation of English into English is the same line printed twice.
+
+    The decision is made in code, from the words themselves. Asking the model
+    which language it is looking at would put a model in charge of what the
+    reader sees, and this is exactly the kind of call that does not need one:
+    function words separate French from English sharply, and a counter can be
+    read, tested and argued with.
+    """
+
+    def test_an_english_requirement_is_never_sent_to_the_translator(self):
+        recu = []
+
+        def enregistre(textes):
+            recu.append(list(textes))
+            return [t.upper() for t in textes]
+
+        attach([une_ligne(requirement=ANGLAIS)], enregistre)
+        assert recu == [], "an English line was sent away to be translated"
+
+    def test_and_it_carries_no_gloss(self):
+        [ligne] = attach([une_ligne(requirement=ANGLAIS)], lambda t: ["x"])
+        assert ligne.gloss == ""
+
+    def test_a_wholly_english_document_costs_no_call_at_all(self):
+        appels = []
+
+        def compte(textes):
+            appels.append(textes)
+            return list(textes)
+
+        attach([une_ligne(requirement=ANGLAIS),
+                une_ligne(requirement="The candidate must be registered in the "
+                                      "trade register of the member state.")], compte)
+        assert appels == []
+
+    def test_a_french_requirement_still_gets_one(self):
+        [ligne] = attach([une_ligne()], lambda t: [GLOSE])
+        assert ligne.gloss == GLOSE
+
+
+class TestABilingualFileIsHandledLineByLine:
+    """Per row, not per document: a pack that quotes an English annex inside a
+    French règlement is one file with two languages in it."""
+
+    def test_only_the_foreign_rows_are_sent(self):
+        recu = []
+
+        def enregistre(textes):
+            recu.append(list(textes))
+            return ["TRADUIT"] * len(textes)
+
+        attach([une_ligne(requirement=ANGLAIS),
+                une_ligne(requirement=EXIGENCE)], enregistre)
+        assert recu == [[EXIGENCE]]
+
+    def test_the_gloss_lands_on_the_row_it_belongs_to(self):
+        anglaise, francaise = attach(
+            [une_ligne(requirement=ANGLAIS), une_ligne(requirement=EXIGENCE)],
+            lambda t: [GLOSE])
+        assert anglaise.gloss == ""
+        assert francaise.gloss == GLOSE
+
+    def test_a_misaligned_answer_still_refuses_the_whole_batch(self):
+        rows = [une_ligne(requirement=ANGLAIS),
+                une_ligne(requirement="un"),
+                une_ligne(requirement="deux")]
+        assert attach(rows, lambda t: ["one"]) == rows
+
+
+class TestWhatTheCounterCallsEnglish:
+    looks_english = staticmethod(looks_english)
+
+    def test_real_french_tender_prose(self):
+        for phrase in (
+            "Lettre de candidature ou formulaire DC1, dûment rempli et daté",
+            "Les candidatures incomplètes ou demeurées incomplètes à la suite "
+            "d'une demande de compléments sont éliminées.",
+            "ne retiendra que les candidats dont le chiffre d'affaires du dernier "
+            "exercice disponible est supérieur ou égal à 138 000 000 euros hors taxe",
+        ):
+            assert not self.looks_english(phrase), phrase
+
+    def test_real_english_tender_prose(self):
+        for phrase in (
+            ANGLAIS,
+            "Bidders are required to submit a copy of the certificate of "
+            "incorporation together with the completed form of tender.",
+            "The contracting authority will exclude any bidder that has not "
+            "provided the information listed in section 4 of this document.",
+        ):
+            assert self.looks_english(phrase), phrase
+
+    def test_an_undecidable_line_is_translated_rather_than_skipped(self):
+        # A missing gloss makes a row unreadable; a redundant one is only
+        # clutter. When the counter cannot tell, it errs toward the reader.
+        for phrase in ("DC1", "", "SIRET 123 456 789", "2026-10-28"):
+            assert not self.looks_english(phrase), phrase
+
+    def test_french_wearing_english_words_is_still_french(self):
+        # These files are full of URLs, form codes and borrowed nouns.
+        phrase = ("Le candidat transmet son DUME via le portail e-Marchés "
+                  "Publics, format PDF, en cas de non-assujettissement à la TVA")
+        assert not self.looks_english(phrase)
+
+    def test_it_ignores_case_and_punctuation(self):
+        assert self.looks_english("THE TENDERER SHALL PROVIDE THE CERTIFICATE.")
+        assert not self.looks_english("LES CANDIDATURES INCOMPLÈTES SONT ÉLIMINÉES.")
