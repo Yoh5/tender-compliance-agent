@@ -203,6 +203,10 @@ saying out loud, because it is the same argument as everything else:
 > the report is exactly the same report. It is the one thing on the page the
 > model wrote and nothing verified, so it is the one thing that decides
 > nothing.
+>
+> And a requirement already written in English gets no translation at all —
+> that decision is a word counter in the code, not a question put to the
+> model.
 
 ## 4:00 – 4:40 · Who it is for, and what it changes
 

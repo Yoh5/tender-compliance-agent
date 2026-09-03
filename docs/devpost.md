@@ -106,7 +106,11 @@ thing on the page a model wrote and nothing verified, so it is the one thing
 that decides nothing: it is produced after every verdict exists, by a call with
 no tools, and a failure leaves the report byte for byte as it would have been.
 The quotation stays French because the tender is French and `anchor` checks it
-against the page — a translated quotation is not a quotation.
+against the page — a translated quotation is not a quotation. A requirement
+already written in English gets no gloss, and which language it is in is
+settled by a function-word counter in the code rather than by asking the
+model: **not one of the 318 sentences in the two published tenders reads as
+English to it.**
 
 The matrix validates itself before printing. A row marked covered that cites no
 evidence is not a formatting problem; it is the tool asserting what it cannot

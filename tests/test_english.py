@@ -366,3 +366,36 @@ class TestFrenchThatQuotesEnglish:
         phrase = ("Copie d'un contrat-cadre intitulé « Master Services "
                   "Agreement for the supply of licences »")
         assert not looks_english(phrase)
+
+
+class TestTheCounterOnTheRealFiles:
+    """Every sentence of both consultation files, checked in one go.
+
+    The unit cases above are chosen, and chosen cases flatter a detector. These
+    are the two published tenders in the repository, split into sentences: any
+    one of them classified English would silently lose its gloss in a run, and
+    nobody would see a thing go wrong — a missing translation looks exactly like
+    a translation that was not needed.
+    """
+
+    @staticmethod
+    def _phrases(nom):
+        import re
+        import pathlib
+
+        from tender_compliance.extraction import read
+
+        racine = pathlib.Path(__file__).resolve().parent.parent
+        source = read(racine / "samples" / "real_dce" / nom)
+        for page in source.pages:
+            for phrase in re.split(r"(?<=[.;])\s+", page.text or ""):
+                phrase = " ".join(phrase.split())
+                if 40 < len(phrase) < 300:
+                    yield phrase
+
+    @pytest.mark.parametrize("nom", ["rc_ANTAI_2026.pdf", "rc_2026SDCRH05.pdf"])
+    def test_not_one_sentence_of_a_french_tender_reads_as_english(self, nom):
+        phrases = list(self._phrases(nom))
+        assert len(phrases) > 50, f"only {len(phrases)} sentences — check the split"
+        faux = [p for p in phrases if looks_english(p)]
+        assert faux == [], f"{len(faux)} of {len(phrases)} classified English: {faux[:3]}"
