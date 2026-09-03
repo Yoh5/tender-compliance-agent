@@ -15,11 +15,36 @@ framework from the Ministry of the Interior, and shows scale, a turnover floor o
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def _utf8_or_die_quietly() -> str:
+    """A Windows console defaults to cp1252, and this script printed a box rule.
+
+    `python demo/walkthrough.py` raised UnicodeEncodeError on its very first
+    line — before shot one, on camera, on any machine whose code page is not
+    65001. The rule is decoration; the demo is not. So: ask stdout for UTF-8,
+    and if it refuses, fall back to a character cp1252 can draw rather than
+    letting a horizontal line end the take.
+    """
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        return "─"
+    except (AttributeError, LookupError, ValueError):
+        return "-"
+
+
+RULE = _utf8_or_die_quietly()
+
+CHILD_ENV = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+"""The reports are French. Accents reaching a cp1252 pipe come out as `?`, and a
+demo that cannot spell « responsabilité » undermines the one about reading
+tenders carefully."""
 
 SHOTS = [
     (
@@ -80,7 +105,7 @@ SHOTS = [
 
 def main() -> int:
     for number, (title, note, command) in enumerate(SHOTS, start=1):
-        print(f"\n{'─' * 72}\n  SHOT {number}/{len(SHOTS)}  {title}\n{'─' * 72}")
+        print(f"\n{RULE * 72}\n  SHOT {number}/{len(SHOTS)}  {title}\n{RULE * 72}")
         print(f"  {note}\n")
         if command:
             print(f"  $ {' '.join(command)}\n")
@@ -91,7 +116,7 @@ def main() -> int:
             return 0
         if command:
             print()
-            subprocess.run(command, cwd=ROOT)
+            subprocess.run(command, cwd=ROOT, env=CHILD_ENV)
     print("\n  Done. Both reports are in out/.\n")
     return 0
 

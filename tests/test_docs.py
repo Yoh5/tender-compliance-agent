@@ -84,5 +84,43 @@ class TestTheConstantsInTheDiagramAreTheRealOnes(unittest.TestCase):
         self.assertIn(f"{tender.OBLIGATIONS_PER_CALL} requirements per call", schema)
 
 
+class TestTheTeleprompterSurvivesTheConsole(unittest.TestCase):
+    """demo/walkthrough.py is what gets typed on camera. It crashed.
+
+    The script drew a box rule with U+2500 and printed it before shot one. On a
+    Windows console still on code page 1252 — the default — that is a
+    UnicodeEncodeError on the first line, with the recorder running. The failure
+    reproduces exactly by giving the process a non-UTF-8 stdout, which is what
+    this test does.
+    """
+
+    SCRIPT = RACINE / "demo" / "walkthrough.py"
+
+    def test_it_runs_with_a_cp1252_stdout(self):
+        import os
+        import subprocess
+        import sys
+
+        env = {**os.environ, "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}
+        # EOF on stdin: the first input() raises, the script says so and exits 0.
+        r = subprocess.run([sys.executable, str(self.SCRIPT)], cwd=RACINE, env=env,
+                           input="", capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr[-800:])
+        self.assertNotIn("UnicodeEncodeError", r.stderr)
+
+    def test_every_shot_points_at_a_file_that_exists(self):
+        import ast
+
+        arbre = ast.parse(self.SCRIPT.read_text(encoding="utf-8"))
+        chaines = [n.value for n in ast.walk(arbre)
+                   if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+        chemins = [c for c in chaines if c.startswith("samples/")]
+        self.assertTrue(chemins, "no sample path found — the check would pass vacuously")
+        for chemin in chemins:
+            self.assertTrue((RACINE / chemin).exists(),
+                            f"shot list points at {chemin}, which is not in the repository")
+
+
 if __name__ == "__main__":
     unittest.main()
