@@ -31,6 +31,15 @@ def row(status=Status.MISSING, **kwargs):
     return Row(**base)
 
 
+def _la_ligne(page: str) -> str:
+    """The first <article>, i.e. one row on its own.
+
+    Assertions about a row belong to the row. The header repeats several of the
+    same words as counts, and a page-wide `in` check quietly passes on them.
+    """
+    return page[page.index("<article"):page.index("</article>")]
+
+
 def analysis(rows=None, **kwargs):
     rows = rows if rows is not None else [row()]
     base = dict(
@@ -127,7 +136,7 @@ class TestTheNumberThatMatters:
         page = render(analysis([row(status=Status.EXPIRED, slack=-9,
                                     evidence=Citation("Assurance RC", 1))]),
                       today=TODAY)
-        assert "-9 j" in page
+        assert "-9 d" in page
 
     def test_and_is_marked_as_the_late_case(self):
         page = render(analysis([row(status=Status.EXPIRED, slack=-9,
@@ -139,7 +148,7 @@ class TestTheNumberThatMatters:
         page = render(analysis([row(status=Status.COVERED, slack=120,
                                     evidence=Citation("Kbis", 1))]),
                       today=TODAY)
-        assert "+120 j" in page
+        assert "+120 d" in page
         assert "slack late" not in page
 
     def test_no_expiry_prints_no_figure(self):
@@ -176,7 +185,7 @@ class TestWhatTheReaderIsToldFirst:
     def test_a_graded_row_shows_what_it_earns(self):
         page = render(analysis([row(status=Status.COVERED, points="2/2",
                                     evidence=Citation("Bilans", 1))]), today=TODAY)
-        assert "obtient 2/2" in page
+        assert "earns 2/2" in page
 
     def test_and_a_missed_one_shows_what_it_costs(self):
         # « si x est strictement supérieur à 3 124 998 d'euros HT : 2/2 ». Sous
@@ -184,24 +193,29 @@ class TestWhatTheReaderIsToldFirst:
         # et le verdict seul ne le dit pas.
         page = render(analysis([row(status=Status.MISSING, points="2/2")]),
                       today=TODAY)
-        assert "perd 2/2" in page
+        assert "forgoes 2/2" in page
         assert "grade lost" in page
 
     def test_an_ungraded_row_shows_no_grade(self):
         # La plupart des exigences sont binaires. Afficher une note là où
         # l'acheteur n'en a énoncé aucune reviendrait à l'inventer.
         page = render(analysis([row(points="")]), today=TODAY)
-        assert "obtient" not in page and "perd" not in page
+        assert "earns" not in page and "forgoes" not in page
 
     def test_an_offer_row_says_so_on_the_row_itself(self):
         # Without the badge the row reads as a candidature piece, and the
         # header count has nothing a reader can trace it back to.
-        page = render(analysis([row(stage=Stage.OFFER)]), today=TODAY)
-        assert "régularisable" in page
+        #
+        # Read the row, not the page: the header carries a "Correctable" count,
+        # so a page-wide search would pass on a row that says nothing at all.
+        # That was harmless while the badge read "régularisable" and became a
+        # trap the moment it was translated.
+        assert "correctable" in _la_ligne(render(analysis([row(stage=Stage.OFFER)]),
+                                                today=TODAY)).lower()
 
     def test_a_candidature_row_carries_no_such_badge(self):
         page = render(analysis([row(stage=Stage.CANDIDATURE)]), today=TODAY)
-        assert "régularisable" not in page
+        assert "correctable" not in _la_ligne(page).lower()
 
     def test_unreadable_pages_are_flagged_above_the_matrix(self):
         page = render(analysis(unreadable="part of the text is stored as images "
@@ -263,3 +277,63 @@ def test_every_status_renders_a_distinct_label():
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))
+
+
+class TestTheReportReadsInEnglish:
+    """The chrome is English; the quotations are French because the tender is.
+
+    Three labels were French by oversight rather than by design, which is a
+    different thing from the quotations and gets fixed rather than defended.
+    """
+
+    def test_no_french_label_is_printed_around_the_rows(self):
+        page = render(analysis([
+            row(status=Status.MISSING, stage=Stage.OFFER),
+            row(status=Status.COVERED, points="2/2",
+                evidence=Citation(document="Attestation", page=1)),
+            row(status=Status.NEEDS_REVIEW, points="0/2"),
+        ]), today=TODAY)
+        for francais in ("régularisable", "obtient", "perd ", "offre —"):
+            assert francais not in page, f"{francais!r} is a label, not a quotation"
+
+    def test_days_are_counted_in_english(self):
+        page = render(analysis([row(status=Status.EXPIRED, slack=-9,
+                                    evidence=Citation(document="A", page=1))]),
+                      today=TODAY)
+        assert "-9 d" in page
+        assert "-9 j" not in page
+
+    def test_the_offer_pile_is_still_named(self):
+        """Not merely somewhere on the page — the header already carries a
+        'Correctable' count, which would let this pass without the row label."""
+        page = render(analysis([row(stage=Stage.OFFER)]), today=TODAY)
+        assert "correctable" in _la_ligne(page).lower()
+
+    def test_a_grade_still_says_whether_it_is_won_or_lost(self):
+        gagne = render(analysis([row(status=Status.COVERED, points="2/2",
+                                     evidence=Citation(document="A", page=1))]),
+                       today=TODAY)
+        perdu = render(analysis([row(status=Status.MISSING, points="2/2")]), today=TODAY)
+        assert "earns 2/2" in gagne
+        assert "forgoes 2/2" in perdu
+
+
+class TestTheEnglishGlossIsShownBesideTheQuotation:
+
+    def test_the_gloss_appears(self):
+        page = render(analysis([row(gloss="Proof of professional indemnity insurance")]),
+                      today=TODAY)
+        assert "Proof of professional indemnity insurance" in page
+
+    def test_the_french_quotation_is_still_there(self):
+        page = render(analysis([row(gloss="Proof of insurance")]), today=TODAY)
+        assert "assurance pour les risques professionnels" in page
+
+    def test_a_row_without_a_gloss_prints_no_empty_line(self):
+        page = render(analysis([row(gloss="")]), today=TODAY)
+        assert 'class="gloss"' not in page
+
+    def test_a_gloss_carrying_markup_is_escaped_like_anything_else(self):
+        page = render(analysis([row(gloss="<script>alert(1)</script>")]), today=TODAY)
+        assert "<script>" not in page
+        assert "&lt;script&gt;" in page

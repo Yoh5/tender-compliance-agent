@@ -59,6 +59,9 @@ def render(analysis) -> str:
     for row in analysis.rows:
         requirement = " ".join(row.requirement.split())
         lines.append(f"{mark[row.status]} p{row.source.page:<3} {requirement[:96]}")
+        if row.gloss:
+            # Sous la citation : le marche fait foi, la traduction aide a le lire.
+            lines.append(f"{'':>9} EN {row.gloss[:96]}")
         if row.evidence:
             lines.append(f"{'':>9} └─ {row.evidence.document} p{row.evidence.page}")
         if row.note:
@@ -84,6 +87,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="limit to a page range, e.g. 11-15 (for a quick look)")
     parser.add_argument("--html", default=None,
                         help="also write a self-contained HTML report to this path")
+    parser.add_argument("--no-gloss", action="store_true",
+                        help="skip the English translation of each requirement "
+                             "(one extra model call per 20 rows)")
     args = parser.parse_args(argv)
 
     load_env()
@@ -145,6 +151,17 @@ def main(argv: list[str] | None = None) -> int:
     except ReportError as error:
         print(str(error), file=sys.stderr)
         return 1
+
+    if not args.no_gloss:
+        # Apres coup, et seulement apres : `analyse` a deja rendu tous ses
+        # verdicts. Une traduction qui n'arrive pas laisse le rapport intact —
+        # `attach` rend les lignes qu'on lui a donnees.
+        from dataclasses import replace
+
+        from tender_compliance.english import attach, translator
+
+        analysis = replace(
+            analysis, rows=attach(analysis.rows, translator(agent_factory)))
 
     print(render(analysis))
 

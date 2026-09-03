@@ -130,6 +130,15 @@ class Row:
     Empty for the ordinary case — most requirements are pass/fail, and printing
     a grade where the buyer stated none would invent one."""
 
+    gloss: str = ""
+    """The requirement in English, for a reader who does not read French.
+
+    Decoration, and deliberately last: it is written after every verdict exists,
+    it is shown beside the quotation and never instead of it, and nothing in
+    this package reads it. `english.attach` is the only writer. Empty whenever
+    the translation did not arrive, which the report treats as ordinary.
+    """
+
     slack: int | None = None
     """Days between the evidence expiring and bids being due. Negative means it
     lapses first.

@@ -139,6 +139,20 @@ h1 {
   Palatino, Georgia, serif;
   font-size: 1.02rem; line-height: 1.5; overflow-wrap: anywhere;
 }
+/* The translation. Sans-serif against the quotation's serif, muted, and marked
+   EN — three signals that this is a rendering of the line above and not a
+   second requirement. The document is what counts; this only helps read it. */
+.gloss {
+  grid-column: 2; margin: .3rem 0 0;
+  font-size: .86rem; line-height: 1.45; color: var(--muted);
+  padding-left: .6rem; border-left: 2px solid var(--rule);
+}
+.gloss::before {
+  content: "EN"; margin-right: .45rem;
+  font-size: .62rem; letter-spacing: .1em; font-weight: 600;
+  color: var(--rule); vertical-align: .1em;
+}
+
 .where, .note {
   grid-column: 2;
   font-size: .82rem; color: var(--muted); margin: 0;
@@ -202,7 +216,7 @@ def _slack(row: Row) -> str:
     late = row.slack < 0
     sign = "" if late else "+"
     return (f'<span class="slack{" late" if late else ""}">'
-            f'{sign}{row.slack} j</span>')
+            f'{sign}{row.slack} d</span>')
 
 
 def _row(row: Row) -> str:
@@ -211,17 +225,22 @@ def _row(row: Row) -> str:
         f'<span class="stamp">{_LABEL[row.status]}</span>',
         f'<blockquote class="requirement">{_escape(row.requirement)}</blockquote>',
     ]
+    if row.gloss:
+        # Sous la citation et en retrait : le document fait foi, la traduction
+        # aide a le lire. L'ordre inverse ferait croire que l'outil a compris le
+        # marche plutot qu'il ne l'a cite.
+        parts.append(f'<p class="gloss">{_escape(row.gloss)}</p>')
 
     where = [f'<b>{_escape(row.source.document)}</b> p{row.source.page}']
     if row.stage is Stage.OFFER:
-        where.append('<span class="pile">offre — régularisable</span>')
+        where.append('<span class="pile">offer — correctable</span>')
     if row.points:
         # Un candidat peut être recevable et perdre le marché aux points. Le
         # verdict seul ne le dit pas ; la note, si.
         gagne = row.status is Status.COVERED
         where.append(
             f'<span class="grade{"" if gagne else " lost"}">'
-            f'{"obtient" if gagne else "perd"} {_escape(row.points)}</span>'
+            f'{"earns" if gagne else "forgoes"} {_escape(row.points)}</span>'
         )
     if row.evidence:
         where.append(f'→ {_escape(row.evidence.document)} p{row.evidence.page}')
