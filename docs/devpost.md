@@ -98,8 +98,15 @@ afterwards, and a quotation that fails is still rejected. **No tool returns a
 verdict, a date comparison or a score** — a test asserts that over the module's
 own source, because the next tool anyone adds will be added in a hurry.
 
-That is also why **332 tests run with no model, no key and no network** — the
-part that must never be wrong is pure.
+That is also why **the whole suite runs with no model, no key and no network** —
+the part that must never be wrong is pure.
+
+Each row also carries an English line under the French quotation. It is the one
+thing on the page a model wrote and nothing verified, so it is the one thing
+that decides nothing: it is produced after every verdict exists, by a call with
+no tools, and a failure leaves the report byte for byte as it would have been.
+The quotation stays French because the tender is French and `anchor` checks it
+against the page — a translated quotation is not a quotation.
 
 The matrix validates itself before printing. A row marked covered that cites no
 evidence is not a formatting problem; it is the tool asserting what it cannot

@@ -16,6 +16,10 @@ the real one, run live — nothing is replayed.
       count has not *dropped*: a fall means collection broke, which looks exactly
       like a leaner suite.
 - [ ] `.env` has a working key. Shot 2 and 4 make real API calls.
+- [ ] The English gloss under each requirement costs one extra call per 20 rows
+      and about 2 s on the DGAC file. `--no-gloss` turns it off if a take needs
+      to be shorter — but it is what makes the rows legible to the judges, so
+      leave it on.
 - [ ] Terminal at a size where a full row fits on one line without wrapping.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
 - [ ] Both reports deleted from `out/` so they are produced on camera.
@@ -187,6 +191,18 @@ One line on Strands, because criterion 1 asks how thoroughly it is used:
 > (This line said "the deterministic modules are the tools they call" until
 > 2026-09-01, when no `@tool` existed anywhere in the repository. A judge reads
 > the code. Say what the code does.)
+
+One sentence about the English lines under each requirement — it is worth
+saying out loud, because it is the same argument as everything else:
+
+> Every row quotes the tender in French, because the tender is French and the
+> code checks that the quotation is really on the page it cites. You cannot
+> check a translation against a French document. So the English line sits
+> *beside* the quotation and never instead of it — it is written after every
+> verdict already exists, by a call with no tools, and if it fails to arrive
+> the report is exactly the same report. It is the one thing on the page the
+> model wrote and nothing verified, so it is the one thing that decides
+> nothing.
 
 ## 4:00 – 4:40 · Who it is for, and what it changes
 
