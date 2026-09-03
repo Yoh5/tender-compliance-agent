@@ -47,17 +47,23 @@ On a live run against the real 34-page Ministry of the Interior file: **66
 requirements found, 51 fatal to the candidature, 7 correctable** — 8 covered, 33
 missing, 1 expired before the deadline, 24 sent for review.
 
-Those counts are from the run of 2026-09-01 and they move: the same file, same
-flags, gave 60 requirements a week earlier. The model is not deterministic, and
-this is the honest version of that. What does not move is what the counts are
-made of — every row is quoted from the tender with its page, and every verdict
-is computed.
+Those counts are from the run of 2026-09-01 and they move in both directions:
+the same file, same flags, gave 60 a week earlier and 59 two days later. The
+model is not deterministic, and this is the honest version of that. What does not
+move is what the counts are made of — every row is quoted from the tender with
+its page, and every verdict is computed.
 
 It also answers the requirements no document can. Article IV.7 of that tender
 demands turnover of at least **138 000 000 €**. No paper proves a revenue figure —
 it is a number against a threshold, so it is arithmetic:
 
     2,39 M€ against 138,00 M€ required — short by 135,61 M€
+
+That row came out of the run of 2026-09-01; the run of 2026-09-03 missed the
+requirement and produced no such row. Page 13 stores part of its text as images
+and IV.7 reaches the model with its subject cut away, so whether the threshold is
+noticed is not yet reliable. What *is* reliable is that a threshold, once found,
+is never judged by the model.
 
 And where the buyer grades rather than merely admits — « si x est strictement
 supérieur à 3 124 998 d'euros HT : **2/2** » — the report says what a threshold

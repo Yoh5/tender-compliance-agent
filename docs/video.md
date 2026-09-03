@@ -23,9 +23,9 @@ the real one, run live — nothing is replayed.
 Total live runtime of the two commands is about **a minute**. The rest is
 talking over static screens, which is where the time budget actually goes.
 
-- [ ] **Time your own dry run before the take.** DGAC measured 15 s on
-      2026-09-01; the ANTAI run was not timed on the attempt that succeeded, and
-      the earlier "85 seconds" written in `devpost.md` was never reproduced. The
+- [ ] **Time your own dry run before the take.** DGAC: 15 s on 2026-09-01,
+      17 s on 2026-09-03. ANTAI: 52 s on 2026-09-03 (not timed on 09-01; the
+      "85 seconds" once written in `devpost.md` was never reproduced). The
       figure depends on the model, the file and the connection — budget the
       silence from your own dry run, not from this file.
 - [ ] **Be ready to re-run the ANTAI command.** On 2026-09-01 the first attempt
@@ -105,19 +105,39 @@ run rather than trusting a number written here.
 >
 > **Do not memorise these two numbers. They move on every run.**
 >
-> Three recorded runs of this same file, same flags: 39 (wrong, and matching no
+> Four recorded runs of this same file, same flags: 39 (wrong, and matching no
 > file at all), then 60 — 5 covered, 27 missing, 28 to review, 49 fatal, 6
-> correctable — then, on 2026-09-01, **66 — 8 covered, 33 missing, 1 expired,
-> 24 to review, 51 fatal, 7 correctable**. The model is not deterministic, so
-> the count is a property of the take, not of the file. Read the banner that is
-> on screen in the take you keep.
+> correctable — then 66 on 2026-09-01 — 8 covered, 33 missing, 1 expired, 24 to
+> review, 51 fatal, 7 correctable — then **59 on 2026-09-03 — 6 covered, 35
+> missing, 1 expired, 17 to review, 46 fatal, 7 correctable**. It goes down as
+> readily as up. The model is not deterministic, so the count is a property of
+> the take, not of the file. Read the banner that is on screen in the take you
+> keep.
+>
+> The small file moves too: DGAC gave 9 obligations on 2026-09-01 and 18 on
+> 2026-09-03. What did not move across every run is the row the video is built
+> on — the insurance certificate, `-9 j`.
 
 **Shot 5** — open `out/antai.html`. Three things, in this order:
 
-1. The turnover floor.
+1. The turnover floor. **Check it is in the report before you plan on it.**
    > The tender requires turnover of at least a hundred and thirty-eight
    > million. This company has 2.39. Short by 135.61 million. No document
    > proves that — it is a number against a threshold, so it is arithmetic.
+
+   The requirement is real and it is article IV.7, page 13: « ne retiendra que
+   les candidats […] dont le chiffre d'affaires du dernier exercice disponible
+   est supérieur ou égal à 138 000 000 euros hors taxe ». But **the run of
+   2026-09-03 did not surface it** — it proposed the weaker line on the same
+   page, « Chiffre d'affaires global pour chacun des 3 derniers exercices »,
+   which carries no number and so triggers no arithmetic. Page 13 is one of the
+   pages whose text is partly stored as images, and IV.7's sentence reaches the
+   model with its subject missing.
+
+   So: after the live run, search the page for `138`. If the row is there, this
+   is the strongest beat in the video and it leads. If it is not, drop it and
+   run the other two — they are in every recorded run — rather than describing
+   something that is not on screen.
 
 2. The banner.
    > Twenty-seven of these pages store part of their text as images. A mandatory
@@ -131,7 +151,8 @@ run rather than trusting a number written here.
    > would be noise. So it says review, and it says why.
 
    **This beat replaced "the rejected proposal at the bottom", and the reason
-   matters.** Both runs on 2026-09-01 produced **zero** rejections — the report
+   matters.** All three runs of 2026-09-01 and 2026-09-03 produced **zero**
+   rejections — the report
    still knows how to show them (`report.py`), there were simply none. That is
    consistent with the agent's new `quote_is_on_page` tool doing its job:
    checking a wording against the page before committing to it, rather than

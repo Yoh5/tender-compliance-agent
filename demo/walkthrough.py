@@ -54,8 +54,11 @@ SHOTS = [
     ),
     (
         "Open out/antai.html",
-        "Say three things, in this order: the turnover floor — 2.39 million "
-        "against 138 million required, short by 135.61 — then the banner saying "
+        "Say three things, in this order. FIRST search the page for 138: the "
+        "turnover floor — 2.39 million against 138 million required, short by "
+        "135.61 — is real (article IV.7, page 13) but the run of 2026-09-03 "
+        "did not surface it. If it is not on screen, skip straight to the "
+        "next two, which every run has produced. Then the banner saying "
         "twenty-seven pages are stored as images and cannot be read, then one "
         "'to review' row and the reason it carries: a form written for this "
         "tender, which no evidence library can hold. The tool says what it "
