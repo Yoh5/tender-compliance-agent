@@ -1,17 +1,25 @@
 # The video
 
-The rules ask for at most five minutes demonstrating the working project and
-pitching the problem, the audience, and why it matters. Presentation is scored
-in its own right, so this is a deliverable and not an afterthought.
+## What the rules actually require
 
-**Two cuts are written here.** The three-minute one below is the one to shoot:
-five minutes is a ceiling, not a target, and a judge watching a queue of
-submissions is not owed the ceiling. The full five-minute script that follows it
-is the reference — every beat, every warning, and the material to fall back on
-if a take goes wrong.
+Read once, then work from the plan below.
 
-Run `python demo/walkthrough.py` and press Enter between shots. Every command is
-the real one, run live — nothing is replayed.
+- **Five minutes maximum.** A ceiling, not a target.
+- **"Slides, screen recordings, and voiceover are all acceptable — you do not
+  need to appear on camera."** A short deck in front of the demonstration is
+  explicitly allowed, not a liberty being taken.
+- The video must demonstrate the working project and pitch **the problem, who it
+  is for, and why it matters**.
+- Public on YouTube or Vimeo.
+
+Judging is **five equally weighted criteria**: technical implementation
+(thoroughness with Strands), design, potential impact, creativity and
+originality, presentation. Presentation is a fifth of the score in its own
+right, which is why this file exists.
+
+Track: **Professional Agents**.
+
+---
 
 ## Before recording
 
@@ -21,54 +29,113 @@ the real one, run live — nothing is replayed.
       nothing fails, and that the count has not *dropped* between your dry run
       and your take: a fall means collection broke, which looks exactly like a
       leaner suite.
-- [ ] `.env` has a working key. Shot 2 and 4 make real API calls.
-- [ ] The English gloss under each requirement costs one extra call per 20 rows
-      and about 2 s on the DGAC file. `--no-gloss` turns it off if a take needs
-      to be shorter — but it is what makes the rows legible to the judges, so
-      leave it on.
+- [ ] `.env` has a working key. Two shots make real API calls.
+- [ ] `out/` is empty, so the report is produced on camera.
 - [ ] Terminal at a size where a full row fits on one line without wrapping.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
-- [ ] Both reports deleted from `out/` so they are produced on camera.
+- [ ] Slides ready for beats 1, 2, 3, 4, 9 and 10 — everything that is not a
+      screen recording.
 
-Total live runtime of the two commands is about **a minute**. The rest is
-talking over static screens, which is where the time budget actually goes.
+**Timings measured on 2026-09-03/04.** They depend on the model, the file and
+the connection, so time your own dry run rather than trusting these:
 
-- [ ] **Time your own dry run before the take.** DGAC: 15 s on 2026-09-01,
-      17 s on 2026-09-03. ANTAI: 52 s on 2026-09-03 (not timed on 09-01; the
-      "85 seconds" once written in `devpost.md` was never reproduced). The
-      figure depends on the model, the file and the connection — budget the
-      silence from your own dry run, not from this file.
-- [ ] **Be ready to re-run the ANTAI command.** On 2026-09-01 the first attempt
-      failed mid-flight on an API error and the second succeeded. Two chances in
-      two runs is not a reliability claim; it is a reason to have the command
-      ready to fire again rather than to freeze on camera.
+| Command | Runtime | What it gives |
+|---|---|---|
+| DGAC, `--pages 5-6` | 17-19 s | the insurance certificate, `-9 d` |
+| European Parliament pack | 35 s | 39 requirements, 8 covered, 31 fatal |
+| ANTAI, full file | 52 s | 34 pages, 27 of them partly images |
+| EFSA pack | 13 s | small, and bilingual |
+
+**Be ready to re-run.** On 2026-09-01 an ANTAI run failed mid-flight on an API
+error and the second attempt succeeded. Have the command ready to fire again
+rather than freezing on camera.
 
 ---
 
-# The three-minute cut
+# The plan
 
-Six beats. Cut by usefulness to a judge, not by duration — what survives is what
-carries the argument.
+Eleven beats, about **4:40**, which leaves margin under the ceiling. The two
+live runs are 52 s of that total and you talk over both, so they are not dead
+time.
 
-## 1 · The problem — 25 s, no capture
+## 1 · Introduction — 20 s · slide
 
-An offer is thrown out on paperwork before anyone reads the substance. Quote the
-tender on screen:
+Who you are, what you built, in two sentences. No suspense: say what the thing
+is before explaining why it should exist.
 
-> « Les candidatures incomplètes […] sont éliminées. » — ANTAI, article IV.9
+> This is a compliance agent for public tenders. You give it the buyer's
+> consultation file and the list of papers your company holds, and it tells you
+> what is missing, what expires too soon, and what a human still has to look at.
 
-The buyer has that checklist. The bidder does not.
+## 2 · The problem — 35 s · slide
 
-## 2 · The sentence the whole project rests on — 15 s
+> Public contracts in France alone are worth about a hundred billion euros a
+> year. A bid can be thrown out before anyone reads it — not on price, not on
+> technique, but because an attestation expired three days before the deadline
+> or a form was missing.
 
-> **The model observes. The code decides.** Every date, every threshold, every
-> verdict is computed.
+Put the tender's own words on screen. It is the strongest slide in the deck
+because it is not your claim:
 
-Say it slowly. It is the thesis; the four beats that follow only prove it.
+> « Les candidatures incomplètes ou demeurées incomplètes à la suite d'une
+> demande de compléments sont éliminées. »
+> — Règlement de la consultation, ANTAI, article IV.9
 
-## 3 · The finding — DGAC, live — 50 s
+> The buyer has that checklist. The bidder does not. A small firm without a bid
+> office is assembling forty documents across several open tenders, from a
+> folder nobody has re-read since the last one.
 
-Run the command. Open `out/dgac.html`. Then stop talking and let them read:
+## 3 · What kind of agent this is — 20 s · slide
+
+> This is a **Professional Agent**. It does one job inside somebody's working
+> day: the person assembling a bid, before they submit it.
+>
+> It is not an assistant and it does not chat. It reads a document, checks
+> claims against it, and produces a compliance matrix — the same artefact a bid
+> manager would build by hand over an afternoon, if they had one.
+
+Say the governing rule here, slowly, because everything after it is a proof of
+it:
+
+> **The model observes. The code decides.**
+
+## 4 · What it does — 20 s · slide
+
+Four verdicts, because they call for four different actions:
+
+| | |
+|---|---|
+| **covered** | a document in your library answers it |
+| **missing** | nothing does |
+| **expires too soon** | it answers today and not on the submission date |
+| **to review** | a human has to look |
+
+And two counts rather than one:
+
+> An incomplete *candidature* is eliminated. An irregular *offre* may be invited
+> to correct itself. The same missing paper ends the bid in one case and is
+> recoverable in the other, so the report counts them separately.
+
+## 5 · The documents — 25 s · show the folder
+
+Open `samples/real_dce/` on screen. Four files, and say plainly what they are:
+
+> These are real consultation files, published by public buyers, downloadable by
+> anyone. Two French — the ANTAI, thirty-four pages, and a smaller one from the
+> DGAC. Two English — the European Parliament and EFSA, from the EU tendering
+> portal.
+>
+> The evidence library is fabricated, and the repository says so. Publishing
+> which of a real company's certificates have lapsed is not something a
+> demonstration gets to do.
+
+That last sentence buys more credibility than anything else in the video. Say
+it.
+
+## 6 · The demonstration — 65 s · live, in both languages
+
+**Run 1 — DGAC, French.** 17 s. Talk over it, then open `out/dgac.html` and stop
+talking:
 
 ```
 expires too soon   Preuve d'une assurance pour les risques professionnels ;
@@ -77,257 +144,129 @@ expires too soon   Preuve d'une assurance pour les risques professionnels ;
 ```
 
 > Valid today. Expired on the day bids are due. Nine days. **Nobody catches that
-> by reading. It is a subtraction.**
+> by reading. It is a subtraction, and it costs the tender.**
 
-The strongest shot in the video. Do not shorten it.
+One sentence on the English line, since the judges are the ones reading it:
 
-## 4 · The scale — ANTAI, live — 40 s
+> The requirement stays in French because the tender is French, and the code
+> checks the quotation against the page it cites. The English sits beside it,
+> never instead of it.
 
-Thirty-four pages, Ministry of the Interior. **Read the banner off the screen**;
-recite no figure from memory.
+**Run 2 — European Parliament, English.** 35 s.
 
-Then **one** of these two — whichever is visible in the take you keep:
+> Same tool, a tender written in English. **[read the banner]** requirements.
+> And notice what is *not* on the screen: no translation lines anywhere. The
+> tool worked out that this document does not need any.
 
-- the banner naming the 27 pages stored as images — *"the tool refuses to say
-  anything is absent from a file it could not read in full, and it names the
-  pages"*;
-- or the turnover floor, **if `138` appears in the report** (see the note in the
-  long script: the run of 2026-09-03 did not surface it).
+## 7 · What it found — 25 s
 
-## 5 · Why it can be trusted — 40 s
+Read the banner off the screen for both runs. **Do not memorise a number.** The
+counts move on every run, and this repository has spoken a stale one four times.
 
-`docs/architecture.svg`, full screen.
+Then the point only a real document could have produced:
 
-> The model proposes twice, on top. Everything else is deterministic. A quote
-> that is not on the page it cites is rejected; a document not in the library is
-> not a match; dates never reach the model at all.
+> The EFSA pack is supposedly English. Its first run returned four requirements
+> — three English, and one that begins « La Déclaration sur l'honneur relative à
+> l'exclusion ». French, inside an English pack. That is why the language is
+> decided per requirement and not per file, and it was found on the first run of
+> a real document rather than designed in advance.
 
-One line on Strands, because criterion 1 asks for it:
+If ANTAI is in your take, its finding goes here:
 
-> Both agents are built with the Strands Agents SDK and are given tools — read a
-> page, check that a wording really appears on it. They are the same checks that
-> run afterwards: **a tool it never calls changes nothing.**
+> Twenty-seven of its thirty-four pages store part of their text as images. A
+> mandatory declaration is legible on screen and invisible to every PDF
+> extractor tested. So the tool refuses to say anything is absent from a file it
+> could not read in full, and it names the pages to open by hand.
 
-If ten seconds are going spare, this is the line that lands:
+## 8 · How it works — 35 s · `docs/architecture.svg` full screen
+
+> Two bands. The model proposes on top, twice — the obligations in the text,
+> then which document might answer each one. It decides nothing. Everything
+> below is deterministic, and nothing crosses from left to right without
+> dropping into the lower band.
+>
+> A quote that is not on the page it cites is rejected, with a reason. A
+> document that is not in the library, verbatim, is not a match. Dates and
+> thresholds are arithmetic and never reach the model at all.
+
+Then Strands, because criterion 1 asks how thoroughly it is used:
+
+> Both agents are built with the Strands Agents SDK, and both are given tools:
+> read a page, check whether a wording really appears on it, list the library,
+> ask whether a name is in it. They are the same checks that run afterwards — so
+> the agent can correct a citation before it commits to one. **But it cannot
+> skip them: a tool it never calls changes nothing, because the verification
+> runs either way.**
+
+And the line that shows the discipline is real rather than claimed:
 
 > The English translation is the one thing on the page a model wrote and nothing
 > verified — **so it is the one thing that decides nothing.**
 
-## 6 · Close — 15 s
+## 9 · Who it is for — 20 s · slide
+
+> The person assembling the bid: a small firm without a bid office, a
+> subcontractor, a first-time bidder. The buyer already has this checklist. The
+> bidder does not.
+>
+> Getting it wrong costs a contract that was winnable on the merits. That is why
+> the tool would rather say "check this" than say "covered".
+
+Say plainly what it does not do. It reads as confidence, not as a caveat:
+
+> It does not write your bid, and it does not tell you that you are compliant.
+> It finds the gaps and shows you where to look.
+
+## 10 · What comes next — 15 s · slide
+
+Name what is recorded and deliberately not built. `samples/real_requirements.json`
+carries each one with the sentence that revealed it:
+
+> One requirement with several satisfaction paths. Requirements the buyer can
+> obtain itself from an official register, which are legitimately absent from a
+> folder. Groups of operators, where the document checklist multiplies per
+> member while the capacity thresholds are assessed on the group as a whole.
+
+## 11 · Close and URL — 10 s
 
 > Public bids are rejected on paperwork before anyone reads them. This agent
-> finds the gaps first. It does not write your bid and it does not tell you that
-> you are compliant — it shows you where to look.
+> finds the gaps first.
 
-Repo URL on screen. Stop.
+    https://github.com/Yoh5/tender-compliance-agent
 
-## What to cut next, and what never to cut
+On screen. Stop.
 
-Cut first: the "who it is for" section (4:00–4:40 in the long script) — it
-follows from everything else. Then the test suite as an opening shot; keep it
-only if you want to open on green, otherwise one sentence does the work
-("everything that decides runs with no model, no key and no network").
+---
+
+## If you run over
+
+Cut in this order:
+
+1. **Beat 10**, perspectives. It is in the Devpost text and in the repository.
+2. **Beat 7's ANTAI paragraph**, keeping the EFSA bilingual one. The second is
+   more surprising and it costs fewer words.
+3. **Beat 4's table**, folding the four verdicts into one spoken sentence.
+4. **Run 2**, keeping only the DGAC run. Do this last: it is what proves the
+   tool handles the judges' own language.
 
 Never cut: the `-9 d` row, and "the model observes, the code decides". The rest
 is context.
 
 ---
 
-# The full five-minute script
-
-## 0:00 – 0:40 · The problem
-
-No screen recording yet. One sentence of context, then the number.
-
-> Public contracts in France are worth about a hundred billion euros a year. A
-> bid can be thrown out before anyone reads it — not on price, not on
-> technique, but because an attestation expired three days before the deadline,
-> or a form was missing.
-
-Quote the tender itself, on screen:
-
-> « Les candidatures incomplètes ou demeurées incomplètes à la suite d'une
-> demande de compléments sont éliminées. »
-> — Règlement de la consultation, ANTAI, article IV.9
-
-> The bid manager checking this has forty documents, several tenders open at
-> once, and a folder nobody has re-read since the last one.
-
-## 0:40 – 1:05 · What it does, in one breath
-
-> You give it the buyer's consultation file and the list of papers your company
-> holds. It gives you back what is missing, what expires too soon, and what a
-> human needs to look at — each one quoted from the tender, with the page.
-
-Then the sentence the whole project is built on, said slowly:
-
-> The model reads and proposes. It never decides. Every date, every threshold,
-> every verdict is computed by code.
-
-## 1:05 – 2:05 · Scenario 1 — the finding
-
-**Shot 1** — the test suite. Let it run to green.
-
-> Before anything else: every verdict comes from code that runs with no model,
-> no key and no network. **[read the count off the screen]** tests.
->
-> (Do not memorise this number. It was written « two hundred and seventy-two »
-> here while the suite ran 307, and « three hundred and seven » while it ran
-> 332 — twice wrong, twice for the same reason. Read what the terminal shows;
-> a figure spoken on camera cannot be corrected afterwards.)
-
-**Shot 2** — the DGAC tender, live. 15 s on 2026-09-01.
-
-**Shot 3** — open `out/dgac.html`. Stop talking. Let them read:
-
-```
-expires too soon   Preuve d'une assurance pour les risques professionnels ;
-                   rc_2026SDCRH05.pdf p5 · → Attestation d'assurance responsabilité
-                   civile professionnelle p1 · -9 j
-                   valid today, expired on the submission date
-```
-
-(Copied from the run of 2026-09-01. The document name here is the library's full
-one — this block said "Attestation d'assurance RC pro", which is not what the
-report prints.)
-
-> Valid today. Expired on the day bids are due. Nine days.
-> Nobody catches that by reading. It is a subtraction, and it costs the tender.
-
-## 2:05 – 3:05 · Scenario 2 — at full size
-
-**Shot 4** — the real ANTAI file, live. Talk over it; time it in your dry
-run rather than trusting a number written here.
-
-> Ministry of the Interior. IT outsourcing and user support. Thirty-four pages.
-> Bids due the 28th of October. **[read the banner]** requirements found, on
-> camera. **[read the banner]** of them end the bid.
->
-> **Do not memorise these two numbers. They move on every run.**
->
-> Four recorded runs of this same file, same flags: 39 (wrong, and matching no
-> file at all), then 60 — 5 covered, 27 missing, 28 to review, 49 fatal, 6
-> correctable — then 66 on 2026-09-01 — 8 covered, 33 missing, 1 expired, 24 to
-> review, 51 fatal, 7 correctable — then **59 on 2026-09-03 — 6 covered, 35
-> missing, 1 expired, 17 to review, 46 fatal, 7 correctable**. It goes down as
-> readily as up. The model is not deterministic, so the count is a property of
-> the take, not of the file. Read the banner that is on screen in the take you
-> keep.
->
-> The small file moves too: DGAC gave 9 obligations on 2026-09-01 and 18 on
-> 2026-09-03. What did not move across every run is the row the video is built
-> on — the insurance certificate, `-9 j`.
-
-**Shot 5** — open `out/antai.html`. Three things, in this order:
-
-1. The turnover floor. **Check it is in the report before you plan on it.**
-   > The tender requires turnover of at least a hundred and thirty-eight
-   > million. This company has 2.39. Short by 135.61 million. No document
-   > proves that — it is a number against a threshold, so it is arithmetic.
-
-   The requirement is real and it is article IV.7, page 13: « ne retiendra que
-   les candidats […] dont le chiffre d'affaires du dernier exercice disponible
-   est supérieur ou égal à 138 000 000 euros hors taxe ». But **the run of
-   2026-09-03 did not surface it** — it proposed the weaker line on the same
-   page, « Chiffre d'affaires global pour chacun des 3 derniers exercices »,
-   which carries no number and so triggers no arithmetic. Page 13 is one of the
-   pages whose text is partly stored as images, and IV.7's sentence reaches the
-   model with its subject missing.
-
-   So: after the live run, search the page for `138`. If the row is there, this
-   is the strongest beat in the video and it leads. If it is not, drop it and
-   run the other two — they are in every recorded run — rather than describing
-   something that is not on screen.
-
-2. The banner.
-   > Twenty-seven of these pages store part of their text as images. A mandatory
-   > declaration is legible on screen and invisible to every PDF extractor
-   > tested. The tool refuses to say anything is absent from a file it could not
-   > read in full, and it names the pages.
-
-3. A "to review" row, and the reason it carries.
-   > This one is not a document to go and find — it is a form to fill in for
-   > this tender. An evidence library cannot answer it, and reporting it missing
-   > would be noise. So it says review, and it says why.
-
-   **This beat replaced "the rejected proposal at the bottom", and the reason
-   matters.** All three runs of 2026-09-01 and 2026-09-03 produced **zero**
-   rejections — the report
-   still knows how to show them (`report.py`), there were simply none. That is
-   consistent with the agent's new `quote_is_on_page` tool doing its job:
-   checking a wording against the page before committing to it, rather than
-   being corrected afterwards.
-
-   Two runs are not proof of that, and the honest version is that we cannot
-   attribute it yet. What is certain is that **you cannot point at a section
-   that is not on screen.** If the take you keep does show a rejection, use the
-   old beat — it is the stronger one.
-
-## 3:05 – 4:00 · Why it can be trusted
-
-**Shot 6** — `docs/architecture.svg`, full screen.
-
-> Two bands. The model proposes on top, twice. Everything else is deterministic,
-> and nothing crosses from left to right without dropping into the lower band.
->
-> A quote that is not on the page it cites is rejected. A document that is not
-> in the library is not a match. Dates never reach the model at all.
->
-> The dashed arrows are what does not get through. That is the product: not that
-> it is clever, but that it cannot quietly be wrong.
-
-One line on Strands, because criterion 1 asks how thoroughly it is used:
-
-> Both agents are built with the Strands Agents SDK, and they have tools: read a
-> page, ask whether a wording is really on it, list the library, ask whether a
-> name is in it. Those are the same checks that run afterwards — so the agent
-> can correct itself before it commits. But it cannot skip them: a tool it never
-> calls changes nothing, because the verification runs either way.
-
-> (This line said "the deterministic modules are the tools they call" until
-> 2026-09-01, when no `@tool` existed anywhere in the repository. A judge reads
-> the code. Say what the code does.)
-
-One sentence about the English lines under each requirement — it is worth
-saying out loud, because it is the same argument as everything else:
-
-> Every row quotes the tender in French, because the tender is French and the
-> code checks that the quotation is really on the page it cites. You cannot
-> check a translation against a French document. So the English line sits
-> *beside* the quotation and never instead of it — it is written after every
-> verdict already exists, by a call with no tools, and if it fails to arrive
-> the report is exactly the same report. It is the one thing on the page the
-> model wrote and nothing verified, so it is the one thing that decides
-> nothing.
->
-> And a requirement already written in English gets no translation at all —
-> that decision is a word counter in the code, not a question put to the
-> model.
-
-## 4:00 – 4:40 · Who it is for, and what it changes
-
-> This is for the person assembling the bid: a small firm without a bid office,
-> a subcontractor, a first-time bidder. The buyer already has this checklist.
-> The bidder does not.
->
-> Getting it wrong costs a contract that was winnable on the merits. That is why
-> the tool would rather say "check this" than say "covered".
-
-Say plainly what it does not do:
-
-> It does not write your bid, and it does not tell you that you are compliant.
-> It finds the gaps and shows you where to look.
-
-## 4:40 – 5:00 · Close
-
-> Public bids are rejected on paperwork before anyone reads them.
-> This agent finds the gaps first.
-
-Repo URL on screen. Stop.
-
----
-
 ## Things not to do
+
+**Do not memorise a count.** Read every figure off the screen in the take you
+keep. Requirements found have moved 39 → 60 → 66 → 59 on the same file with the
+same flags, and the test count has been misstated three times. A figure spoken
+on camera cannot be corrected afterwards.
+
+**Do not promise a row before you have seen it.** The ANTAI turnover floor
+(138 000 000 €) appeared on 2026-09-01 and not on 2026-09-03; the European
+Parliament pack states a floor of EUR 175 000 which no run has yet been observed
+to surface. Search the report for the figure before planning a beat on it, and
+fall back on the banner and the image-pages notice, which every run has
+produced.
 
 **Do not read the matrix aloud row by row.** Two rows carry the argument; the
 rest is texture.
@@ -336,8 +275,7 @@ rest is texture.
 only says covered or missing is a tool that spends its uncertainty on covered.
 
 **Do not speed up the live runs in post.** A judge who sees a real run at its
-real speed believes the rest. A jump cut in the middle of a demo invites the opposite.
+real speed believes the rest. A jump cut in the middle of a demo invites the
+opposite.
 
-**Do not claim it is finished.** Say what is measured and what is not: the
-scoring grids and group cardinality are recorded in
-`samples/real_requirements.json` and not built.
+**Do not claim it is finished.** Say what is measured and what is not.
