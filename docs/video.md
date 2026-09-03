@@ -1,20 +1,26 @@
-# The five-minute video
+# The video
 
 The rules ask for at most five minutes demonstrating the working project and
 pitching the problem, the audience, and why it matters. Presentation is scored
 in its own right, so this is a deliverable and not an afterthought.
+
+**Two cuts are written here.** The three-minute one below is the one to shoot:
+five minutes is a ceiling, not a target, and a judge watching a queue of
+submissions is not owed the ceiling. The full five-minute script that follows it
+is the reference — every beat, every warning, and the material to fall back on
+if a take goes wrong.
 
 Run `python demo/walkthrough.py` and press Enter between shots. Every command is
 the real one, run live — nothing is replayed.
 
 ## Before recording
 
-- [ ] `python -m pytest tests/ -q` → **332 passed, none failed**. The count is a
-      floor, not an equality: it grows every time a test is added, and this line
-      has been stale twice already — 272 written while the suite ran 307, then
-      307 while it ran 332. What matters is that nothing fails, and that the
-      count has not *dropped*: a fall means collection broke, which looks exactly
-      like a leaner suite.
+- [ ] `python -m pytest tests/ -q` → **none failed**. No number is written here
+      on purpose: this line has been stale three times — 272 while the suite ran
+      307, 307 while it ran 332, 332 while it ran 380. What matters is that
+      nothing fails, and that the count has not *dropped* between your dry run
+      and your take: a fall means collection broke, which looks exactly like a
+      leaner suite.
 - [ ] `.env` has a working key. Shot 2 and 4 make real API calls.
 - [ ] The English gloss under each requirement costs one extra call per 20 rows
       and about 2 s on the DGAC file. `--no-gloss` turns it off if a take needs
@@ -38,6 +44,96 @@ talking over static screens, which is where the time budget actually goes.
       ready to fire again rather than to freeze on camera.
 
 ---
+
+# The three-minute cut
+
+Six beats. Cut by usefulness to a judge, not by duration — what survives is what
+carries the argument.
+
+## 1 · The problem — 25 s, no capture
+
+An offer is thrown out on paperwork before anyone reads the substance. Quote the
+tender on screen:
+
+> « Les candidatures incomplètes […] sont éliminées. » — ANTAI, article IV.9
+
+The buyer has that checklist. The bidder does not.
+
+## 2 · The sentence the whole project rests on — 15 s
+
+> **The model observes. The code decides.** Every date, every threshold, every
+> verdict is computed.
+
+Say it slowly. It is the thesis; the four beats that follow only prove it.
+
+## 3 · The finding — DGAC, live — 50 s
+
+Run the command. Open `out/dgac.html`. Then stop talking and let them read:
+
+```
+expires too soon   Preuve d'une assurance pour les risques professionnels ;
+                   EN Proof of professional liability insurance
+                   -9 d → valid today, expired on the submission date
+```
+
+> Valid today. Expired on the day bids are due. Nine days. **Nobody catches that
+> by reading. It is a subtraction.**
+
+The strongest shot in the video. Do not shorten it.
+
+## 4 · The scale — ANTAI, live — 40 s
+
+Thirty-four pages, Ministry of the Interior. **Read the banner off the screen**;
+recite no figure from memory.
+
+Then **one** of these two — whichever is visible in the take you keep:
+
+- the banner naming the 27 pages stored as images — *"the tool refuses to say
+  anything is absent from a file it could not read in full, and it names the
+  pages"*;
+- or the turnover floor, **if `138` appears in the report** (see the note in the
+  long script: the run of 2026-09-03 did not surface it).
+
+## 5 · Why it can be trusted — 40 s
+
+`docs/architecture.svg`, full screen.
+
+> The model proposes twice, on top. Everything else is deterministic. A quote
+> that is not on the page it cites is rejected; a document not in the library is
+> not a match; dates never reach the model at all.
+
+One line on Strands, because criterion 1 asks for it:
+
+> Both agents are built with the Strands Agents SDK and are given tools — read a
+> page, check that a wording really appears on it. They are the same checks that
+> run afterwards: **a tool it never calls changes nothing.**
+
+If ten seconds are going spare, this is the line that lands:
+
+> The English translation is the one thing on the page a model wrote and nothing
+> verified — **so it is the one thing that decides nothing.**
+
+## 6 · Close — 15 s
+
+> Public bids are rejected on paperwork before anyone reads them. This agent
+> finds the gaps first. It does not write your bid and it does not tell you that
+> you are compliant — it shows you where to look.
+
+Repo URL on screen. Stop.
+
+## What to cut next, and what never to cut
+
+Cut first: the "who it is for" section (4:00–4:40 in the long script) — it
+follows from everything else. Then the test suite as an opening shot; keep it
+only if you want to open on green, otherwise one sentence does the work
+("everything that decides runs with no model, no key and no network").
+
+Never cut: the `-9 d` row, and "the model observes, the code decides". The rest
+is context.
+
+---
+
+# The full five-minute script
 
 ## 0:00 – 0:40 · The problem
 
