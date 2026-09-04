@@ -35,9 +35,12 @@ def une_ligne(**kwargs) -> Row:
 class TestTheGlossIsAttached:
 
     def test_each_row_gets_the_translation_that_belongs_to_it(self):
+        # Une vraie traduction, pas un echo en majuscules : une glose qui redit
+        # l'exigence est jetee, et le faux traducteur ne prouverait plus rien.
+        mots = {"un": "one", "deux": "two"}
         rows = [une_ligne(requirement="un"), une_ligne(requirement="deux")]
-        sortie = attach(rows, lambda textes: [t.upper() for t in textes])
-        assert [r.gloss for r in sortie] == ["UN", "DEUX"]
+        sortie = attach(rows, lambda textes: [mots[t] for t in textes])
+        assert [r.gloss for r in sortie] == ["one", "two"]
 
     def test_the_translator_is_shown_the_requirements_and_nothing_else(self):
         recu = []
@@ -58,6 +61,94 @@ class TestTheGlossIsAttached:
 
         assert attach([], compte) == []
         assert appels == []
+
+
+class TestAGlossThatOnlyRepeatsTheRequirementIsDropped:
+    """Observed on the European Parliament pack, 2026-09-04.
+
+    Three rows came back glossed with themselves, renumbered:
+
+        MISSING  p16  employ fewer than 250 persons
+                  EN 2. employ fewer than 250 persons
+
+    The counter had judged those fragments non-English — they are English, but
+    too short to carry the two function words it requires, and that bar is not
+    negotiable downwards: a French fragment like "Assurance responsabilite
+    civile" carries none either, and lowering the bar would silently stop
+    glossing the French rows this feature exists for.
+
+    So the counter keeps its bar and the output is checked instead. A gloss that
+    says the requirement again is not a translation, and on camera it reads as
+    the tool malfunctioning — which, for the reader, is the same thing.
+    """
+
+    def test_the_case_that_was_actually_observed(self):
+        exigence = "employ fewer than 250 persons"
+        [ligne] = attach([une_ligne(requirement=exigence)],
+                         lambda t: ["2. employ fewer than 250 persons"])
+        assert ligne.gloss == ""
+
+    def test_a_gloss_identical_to_the_requirement_is_dropped(self):
+        [ligne] = attach([une_ligne(requirement="Annexe VI")], lambda t: ["Annexe VI"])
+        assert ligne.gloss == ""
+
+    def test_case_and_punctuation_do_not_rescue_an_echo(self):
+        [ligne] = attach([une_ligne(requirement="Annexe VI, dument signee.")],
+                         lambda t: ["ANNEXE VI — dument signee"])
+        assert ligne.gloss == ""
+
+    def test_an_empty_translation_is_not_a_translation(self):
+        [ligne] = attach([une_ligne()], lambda t: ["   "])
+        assert ligne.gloss == ""
+
+    def test_a_gloss_with_no_word_in_it_is_not_a_translation(self):
+        """`strip()` is not the test. A gloss of "—" survives it and says
+        nothing."""
+        [ligne] = attach([une_ligne()], lambda t: ["—"])
+        assert ligne.gloss == ""
+
+    def test_the_article_the_translator_dropped_does_not_rescue_the_echo(self):
+        """The real second case, European Parliament p16, on the run after the
+        first fix. Not an echo — one article short of one — and just as useless.
+
+        Which is why the rule is not "the strings match" but "the gloss brings a
+        word the requirement did not have".
+        """
+        exigence = "an annual balance sheet total not exceeding EUR 43 million."
+        [ligne] = attach(
+            [une_ligne(requirement=exigence)],
+            lambda t: ["4. Annual balance sheet total not exceeding EUR 43 million."])
+        assert ligne.gloss == ""
+
+    def test_a_gloss_that_only_reshuffles_the_requirement_is_dropped(self):
+        """Same words, another order, nothing gained. A French line and its
+        English gloss do not share a vocabulary — the two languages barely spell
+        a word the same way — so this can only happen to a line that was already
+        readable."""
+        [ligne] = attach([une_ligne(requirement="Annexe VI signed and dated")],
+                         lambda t: ["Annexe VI dated and signed"])
+        assert ligne.gloss == ""
+
+    def test_a_real_translation_is_kept(self):
+        [ligne] = attach([une_ligne()], lambda t: [GLOSE])
+        assert ligne.gloss == GLOSE
+
+    def test_a_translation_that_adds_one_word_is_kept(self):
+        """The rule is "says the same thing", not "looks similar". Anything
+        short of an exact echo is the translator's judgement, not ours."""
+        [ligne] = attach([une_ligne(requirement="Annexe VI")],
+                         lambda t: ["Annexe VI, completed"])
+        assert ligne.gloss == "Annexe VI, completed"
+
+    def test_dropping_one_echo_leaves_the_other_rows_glossed(self):
+        rows = [une_ligne(requirement="Annexe VI"),
+                une_ligne(requirement=EXIGENCE)]
+        sortie = attach(rows, lambda t: ["Annexe VI", GLOSE])
+        assert [r.gloss for r in sortie] == ["", GLOSE]
+
+    def test_the_requirement_itself_is_never_touched(self):
+        [ligne] = attach([une_ligne(requirement="Annexe VI")], lambda t: ["Annexe VI"])
+        assert ligne.requirement == "Annexe VI"
 
 
 class TestNothingElseOnTheRowMoves:
@@ -325,6 +416,59 @@ class TestWhatTheCounterCallsEnglish:
         ):
             assert self.looks_english(phrase), phrase
 
+    def test_the_short_lines_a_thin_word_list_got_wrong(self):
+        """Both observed on the European Parliament pack, 2026-09-04, where they
+        were translated into themselves. Five English words carry one or two
+        function words, so a list missing the common ones does not lose accuracy
+        on short lines — it gets them backwards."""
+        for phrase in ("employ fewer than 250 persons",
+                       "an annual balance sheet total not exceeding "
+                       "EUR 43 million."):
+            assert self.looks_english(phrase), phrase
+
+    def test_a_bare_noun_phrase_is_beyond_this_counter_and_says_so(self):
+        """"financial data sheet fully completed (Annex VII);" — third of the
+        three, and the one no word list can reach: it contains not a single
+        function word in either language. Counting them cannot decide it, and
+        pretending otherwise would mean guessing.
+
+        So it is sent to the translator, and what comes back is judged instead.
+        That division of labour is the design, not a gap in it — and it is why
+        `_ajoute_quelque_chose` exists rather than being a nicety.
+        """
+        phrase = "financial data sheet fully completed (Annex VII);"
+        assert not self.looks_english(phrase)
+        [ligne] = attach([une_ligne(requirement=phrase)],
+                         lambda t: ["1. financial data sheet fully completed "
+                                    "(Annex VII);"])
+        assert ligne.gloss == ""
+
+    def test_the_words_that_are_french_too_are_kept_out(self):
+        """`a`, `on`, `or`, `but` and `car` are ordinary French words, and the
+        list must not contain them. Asserted on the list itself as well as on a
+        sentence: the ratio hides the mistake on any line carrying French
+        markers, so a behavioural test alone would pass with them included and
+        prove nothing.
+        """
+        from tender_compliance.english import _ANGLAIS
+
+        for mot in ("a", "on", "or", "but", "car"):
+            assert mot not in _ANGLAIS, f"{mot!r} is a French word too"
+
+        # Zero French markers in this one, so the ratio cannot rescue it: with
+        # « on » and « a » counted as English, it flips.
+        assert not self.looks_english("On a joint deux pieces")
+
+    def test_one_english_word_is_not_evidence(self):
+        """Why the bar is two. These files quote English annex titles inside
+        French lines, and « Annexe » and « Bordereau » are nouns, not markers —
+        so there is nothing French for the ratio to weigh against. At a bar of
+        one, both of these lose the gloss they exist for.
+        """
+        for phrase in ("Annexe « Terms and Conditions »",
+                       "Bordereau « Scope of Work » à compléter"):
+            assert not self.looks_english(phrase), phrase
+
     def test_an_undecidable_line_is_translated_rather_than_skipped(self):
         # A missing gloss makes a row unreadable; a redundant one is only
         # clutter. When the counter cannot tell, it errs toward the reader.
@@ -460,3 +604,18 @@ class TestLinksAreNotProse:
         assert looks_english(
             "The tenderer shall send the signed form to the address "
             "procurement.de.la@example.eu before the deadline stated above.")
+
+    def test_a_short_english_line_a_french_link_would_flip(self):
+        """The two cases above stopped being decisive on 2026-09-04, when the
+        English word list grew: both sentences now carry enough English to win
+        the ratio even with the link counted, so they pass either way.
+
+        A short line has no such margin. Four words of English against a path
+        that spells out « le », « du » and « en » loses — and this is the shape
+        a requirement actually takes: an instruction and a link.
+        """
+        assert looks_english(
+            "See the guide at "
+            "https://www.economie.gouv.fr/daj/le-guide-du-candidat-en-ligne")
+        assert looks_english(
+            "Send the form to marche.du.candidat@example.fr")

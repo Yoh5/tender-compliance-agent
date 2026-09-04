@@ -84,8 +84,68 @@ def attach(rows: list, translate: Translate) -> list:
 
     gloses = {rang: " ".join(str(t).split())
               for (rang, _), t in zip(a_traduire, traduites)}
+
+    # Un dernier filtre sur ce qui est revenu, pas sur ce qui est parti : le
+    # compteur en amont a deja tranche, et il lui arrive de se tromper vers le
+    # bas. Une glose qui redit l'exigence n'est pas une traduction.
+    gloses = {rang: glose for rang, glose in gloses.items()
+              if _ajoute_quelque_chose(glose, rows[rang].requirement)}
+
     return [replace(row, gloss=gloses[rang]) if rang in gloses else row
             for rang, row in enumerate(rows)]
+
+
+_ENUMERATEUR = _re.compile(
+    r"^\s*(?:\d{1,3}|[a-z]|[ivxlcdm]{1,4})\s*[.)\]]\s+", _re.IGNORECASE)
+"""A leading list marker: `2. `, `a) `, `iv] `. Translators add and drop these
+freely, and a difference of numbering is not a difference of meaning."""
+
+
+def _mots_nus(texte: str) -> list:
+    """The words, in order, stripped of case, punctuation and list marker."""
+    return _re.findall(r"[^\W_]+", _ENUMERATEUR.sub("", texte or "").lower(),
+                       _re.UNICODE)
+
+
+def _ajoute_quelque_chose(glose: str, exigence: str) -> bool:
+    """Whether this translation says anything the requirement did not.
+
+    Observed on the European Parliament pack, 2026-09-04: three English
+    fragments were judged non-English by the counter, sent to the translator,
+    and came back as themselves with a number in front —
+
+        MISSING  p16  employ fewer than 250 persons
+                  EN 2. employ fewer than 250 persons
+
+    The counter's bar is two English function words, and these fragments carry
+    one. Lowering it is not an option: a French fragment such as "Assurance
+    responsabilite civile" carries none either, and it would stop being glossed
+    — losing the rows this feature exists for, to save three it does not.
+
+    So the bar stays and the output is checked instead.
+
+    The first version of this test was exact equality of the words. The document
+    itself refused it on the very next run:
+
+        MISSING  p16  an annual balance sheet total not exceeding EUR 43 million.
+                  EN 4. Annual balance sheet total not exceeding EUR 43 million.
+
+    Not an echo — the translator dropped one article — and useless all the same.
+    So the question is not whether the two strings match but whether the gloss
+    brings a word the requirement did not already have. That is what a reader
+    gains or does not gain, and it is why the rule holds across two languages:
+    French and English almost never spell a word the same way, so a real gloss
+    of a French line brings new words by construction. One that brings none was
+    never translating anything.
+
+    The call is still paid for. That is the honest cost of deciding on what came
+    back rather than guessing beforehand, and it buys a report that never shows
+    a row glossed with itself.
+
+    A gloss with no word at all — empty, or reduced to a dash — needs no special
+    case: it brings no new word because it brings none.
+    """
+    return bool(set(_mots_nus(glose)) - set(_mots_nus(exigence)))
 
 
 # ---------------------------------------------------------------- the counter
@@ -108,7 +168,20 @@ the of and to in for by is are be been shall must that this these those with
 which not any all from will have has at as its their our your if when where
 who whose than then such each may can should would upon into within without
 under over before after during including provided both between during other
+an was were do does no more less fewer only also however unless until while
+whether above below against among across through since they them we what why
+how it being every another several many much few some most least same therefore
+thus whereas thereof herein hereby
 """.split())
+"""English function words. Deliberately does NOT contain `a`, `on`, `or`, `but`
+or `car`: each is an ordinary French word, and a list that counts them votes for
+English on French prose.
+
+The second line was added on 2026-09-04, after two five-word requirements in the
+European Parliament pack were sent to the translator and came back as
+themselves. `employ fewer than 250 persons` carried exactly one word this list
+knew. A short line has few function words in it, so a thin list does not merely
+lose precision on short lines — it fails on them."""
 
 _FRANCAIS = frozenset("""
 le la les un une des du de et ou au aux dans pour par sur est sont qui que ne
