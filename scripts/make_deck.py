@@ -7,12 +7,18 @@ other scripts here: a deck edited by hand drifts from the script it illustrates,
 and nobody notices until the take. This one is generated from the same facts as
 `docs/video.md`, so a figure that changes there is changed in one place.
 
-THE SLIDES ARE NOT THE VIDEO. Beats 6 and 7 of `docs/video.md` are a screen
-recording of two live runs; the deck carries a marker for them so the running
-order stays intact while rehearsing, and those two slides are cut away in the
-edit. Everything a slide claims is measured — the numbers here are the ones
-observed on 2026-09-03/04 and named as such, because a slide is read as a
-statement of fact in a way a spoken sentence is not.
+ONE SLIDE PER POINT OF THE RUNNING ORDER, AND NOTHING ELSE. The first version
+carried thirteen slides for eleven points: it split the demonstration into two
+markers and the "how" into a diagram plus a Strands slide. Both splits were the
+deck arguing with itself — a point that needs two slides has not been decided
+yet, and a deck that outruns its own running order is the thing that makes a
+five-minute video run six.
+
+THE SLIDES ARE NOT THE VIDEO. Point 6 is a screen recording of two live runs;
+the deck carries one marked placeholder for it so the running order survives
+rehearsal, and that slide is cut in the edit. Everything a slide claims is
+measured — the numbers are the ones observed on 2026-09-03/04 — because a slide
+is read as a statement of fact in a way a spoken sentence is not.
 
 The palette is the report's own (`report.py`), so the deck and the thing it
 describes look like one product rather than two.
@@ -20,15 +26,13 @@ describes look like one product rather than two.
 
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN
-from pptx.util import Emu, Inches, Pt
+from pptx.util import Inches, Pt
 
 ROOT = Path(__file__).resolve().parent.parent
 SORTIE = ROOT / "docs" / "deck.pptx"
@@ -53,11 +57,11 @@ LARGEUR, HAUTEUR = 13.333, 7.5
 MARGE = 0.95
 COLONNE = LARGEUR - 2 * MARGE
 
-
 # The diagram's own heading lives above y=88 in its viewBox. It is cropped out
 # for the deck: the slide already carries a title, and printing two is the kind
 # of thing that reads as assembled rather than designed.
 SCHEMA_HAUT = 88
+
 
 def _rendre_le_schema() -> tuple[Path, float]:
     """architecture.svg → PNG, because PowerPoint will not place an SVG.
@@ -127,6 +131,17 @@ def _filet(diapo, gauche, haut, largeur=1.15, couleur=STAMP, epaisseur=0.055):
     return forme
 
 
+def _bloc(diapo, gauche, haut, largeur, hauteur, couleur=INK):
+    forme = diapo.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(gauche),
+                                   Inches(haut), Inches(largeur),
+                                   Inches(hauteur))
+    forme.fill.solid()
+    forme.fill.fore_color.rgb = couleur
+    forme.line.fill.background()
+    forme.shadow.inherit = False
+    return forme
+
+
 def _fond(diapo, couleur):
     diapo.background.fill.solid()
     diapo.background.fill.fore_color.rgb = couleur
@@ -142,11 +157,10 @@ def _page(prs, couleur=PAPER):
     return diapo
 
 
-def _titre(diapo, titre, *, haut=1.05, sur_fond_sombre=False):
+def _titre(diapo, titre, *, haut=1.05):
     _filet(diapo, MARGE, haut, couleur=STAMP)
     cadre = _texte(diapo, MARGE, haut + 0.28, COLONNE, 1.0)
-    _ligne(cadre, titre, taille=34, gras=True,
-           couleur=WHITE if sur_fond_sombre else INK, premiere=True)
+    _ligne(cadre, titre, taille=34, gras=True, couleur=INK, premiere=True)
     return haut + 1.25
 
 
@@ -156,7 +170,7 @@ def construire() -> Presentation:
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(LARGEUR), Inches(HAUTEUR)
 
-    # 1 ─ title ------------------------------------------------------------
+    # 1 ─ introduction -----------------------------------------------------
     d = _page(prs, INK)
     _filet(d, MARGE, 2.5, largeur=1.6)
     c = _texte(d, MARGE, 2.9, COLONNE, 2.4)
@@ -171,7 +185,7 @@ def construire() -> Presentation:
               "THE STRANDS AGENTS SDK",
            taille=11, couleur=MUTED, premiere=True, espacement=1.6)
     _notes(d, """
-Twenty seconds. Say what it is before saying why it should exist.
+20 s. Say what it is before saying why it should exist.
 
 "This is a compliance agent for public tenders. You give it the buyer's
 consultation file and the list of papers your company holds, and it tells you
@@ -185,20 +199,19 @@ what is missing, what expires too soon, and what a human still has to look at."
     _ligne(c, "€100 bn", taille=46, gras=True, couleur=INK, premiere=True,
            apres=10)
     _ligne(c, "of French public contracts a year, roughly — and a bid can be "
-              "thrown out "
-              "before anyone reads it. Not on price. Not on technique. Because "
-              "an attestation expired three days before the deadline, or a form "
-              "was missing.",
+              "thrown out before anyone reads it. Not on price. Not on "
+              "technique. Because an attestation expired three days before the "
+              "deadline, or a form was missing.",
            taille=15, couleur=MUTED, interligne=1.4)
 
-    fond = d.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.95),
-                              Inches(bas - 0.1), Inches(5.4), Inches(2.35))
-    fond.fill.solid()
-    fond.fill.fore_color.rgb = WHITE
-    fond.line.color.rgb = RULE
-    fond.line.width = Pt(0.75)
-    fond.shadow.inherit = False
-    c = _texte(d, 7.35, bas + 0.35, 4.6, 2.4)
+    carte = d.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.95),
+                               Inches(bas - 0.1), Inches(5.4), Inches(2.35))
+    carte.fill.solid()
+    carte.fill.fore_color.rgb = WHITE
+    carte.line.color.rgb = RULE
+    carte.line.width = Pt(0.75)
+    carte.shadow.inherit = False
+    c = _texte(d, 7.35, bas + 0.35, 4.6, 1.9)
     _ligne(c, "« Les candidatures incomplètes ou demeurées incomplètes à la "
               "suite d'une demande de compléments sont éliminées. »",
            taille=16, couleur=INK, police=SERIF, interligne=1.45, apres=12,
@@ -214,38 +227,31 @@ what is missing, what expires too soon, and what a human still has to look at."
               "since the last one.",
            taille=14, couleur=MUTED)
     _notes(d, """
-Thirty-five seconds. The quotation is the strongest thing on the slide because
-it is not your claim — it is the buyer's own wording, in the file itself.
+35 s. The quotation is the strongest thing on the slide because it is not your
+claim — it is the buyer's own wording, in the file itself.
 """)
 
-    # 3 ─ what kind of agent ----------------------------------------------
+    # 3 ─ what kind of agent -----------------------------------------------
     d = _page(prs)
     bas = _titre(d, "A Professional Agent")
     c = _texte(d, MARGE, bas, 11.4, 1.8)
     _ligne(c, "It does one job inside somebody's working day: the person "
               "assembling a bid, before they submit it.",
-           taille=19, couleur=INK, interligne=1.35, premiere=True, apres=10)
+           taille=20, couleur=INK, interligne=1.35, premiere=True, apres=12)
     _ligne(c, "Not an assistant, and it does not chat. It reads a document, "
-              "checks claims against it, and produces a compliance matrix — the "
-              "artefact a bid manager would build by hand over an afternoon, if "
-              "they had one.",
-           taille=14, couleur=MUTED, interligne=1.4)
+              "checks every claim against it, and produces a compliance matrix.",
+           taille=15, couleur=MUTED, interligne=1.4)
 
-    bloc = d.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(MARGE), Inches(4.45),
-                              Inches(COLONNE), Inches(1.55))
-    bloc.fill.solid()
-    bloc.fill.fore_color.rgb = INK
-    bloc.line.fill.background()
-    bloc.shadow.inherit = False
-    c = _texte(d, MARGE, 4.9, COLONNE, 0.9)
+    _bloc(d, MARGE, 4.4, COLONNE, 1.6)
+    c = _texte(d, MARGE, 4.87, COLONNE, 0.9)
     _ligne(c, "The model observes.  The code decides.", taille=30, gras=True,
            couleur=WHITE, premiere=True, aligne=PP_ALIGN.CENTER)
     c = _texte(d, MARGE, 6.25, COLONNE, 0.6)
     _ligne(c, "Everything after this slide is a proof of that one sentence.",
            taille=13, couleur=MUTED, premiere=True, aligne=PP_ALIGN.CENTER)
     _notes(d, """
-Twenty seconds. Say the rule slowly. It is the thesis of the whole submission
-and every later beat exists to prove it.
+20 s. Say the rule slowly. It is the thesis of the whole submission, and every
+later beat exists to prove it.
 """)
 
     # 4 ─ what it does -----------------------------------------------------
@@ -258,34 +264,26 @@ and every later beat exists to prove it.
          STAMP),
         ("to review", "a human has to look", REVIEW),
     ]
-    haut = bas
+    haut = bas + 0.15
     for etiquette, glose, couleur in verdicts:
         c = _texte(d, MARGE, haut, 3.1, 0.45)
         _ligne(c, etiquette.upper(), taille=12.5, gras=True, couleur=couleur,
                premiere=True, espacement=1.1)
-        c = _texte(d, MARGE + 3.35, haut - 0.03, 7.9, 0.5)
-        _ligne(c, glose, taille=15, couleur=INK, premiere=True)
-        trait = d.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(MARGE),
-                                   Inches(haut + 0.44), Inches(COLONNE),
-                                   Inches(0.01))
-        trait.fill.solid()
-        trait.fill.fore_color.rgb = RULE
-        trait.line.fill.background()
-        trait.shadow.inherit = False
-        haut += 0.72
+        c = _texte(d, MARGE + 3.35, haut - 0.04, 7.9, 0.5)
+        _ligne(c, glose, taille=16, couleur=INK, premiere=True)
+        trait = _bloc(d, MARGE, haut + 0.48, COLONNE, 0.01, couleur=RULE)
+        haut += 0.78
 
-    c = _texte(d, MARGE, haut + 0.35, COLONNE, 1.2)
-    _ligne(c, "And two counts rather than one.", taille=18, gras=True,
-           couleur=INK, premiere=True, apres=8)
-    _ligne(c, "An incomplete candidature is eliminated. An irregular offre may "
-              "be invited to correct itself. The same missing paper ends the "
-              "bid in one case and is recoverable in the other — so one number "
-              "would tell the reader to treat them alike, which is wrong in "
-              "both directions.",
-           taille=14, couleur=MUTED, interligne=1.4)
+    c = _texte(d, MARGE, haut + 0.45, COLONNE, 1.0)
+    _ligne(c, "And two counts, not one: an incomplete candidature is "
+              "eliminated, an irregular offre may be invited to correct itself.",
+           taille=16, gras=True, couleur=INK, premiere=True, apres=8,
+           interligne=1.35)
+    _ligne(c, "The same missing paper ends the bid in one case and is "
+              "recoverable in the other.", taille=14, couleur=MUTED)
     _notes(d, """
-Twenty seconds. Do not read the table aloud line by line — it reads itself.
-Spend the words on the two piles, which is the part nobody expects.
+20 s. Do not read the table aloud — it reads itself. Spend the words on the two
+piles, which is the part nobody expects.
 """)
 
     # 5 ─ the documents ----------------------------------------------------
@@ -301,74 +299,63 @@ Spend the words on the two piles, which is the part nobody expects.
         ("itt_EFSA_2023.pdf", "English · 5 pages",
          "EFSA — and one requirement of it is in French."),
     ]
-    haut = bas
+    haut = bas + 0.1
     for nom, meta, note in fichiers:
         c = _texte(d, MARGE, haut, 4.0, 0.4)
-        _ligne(c, nom, taille=14.5, gras=True, couleur=INK, premiere=True)
-        c = _texte(d, MARGE + 4.15, haut + 0.02, 2.0, 0.4)
+        _ligne(c, nom, taille=15, gras=True, couleur=INK, premiere=True)
+        c = _texte(d, MARGE + 4.15, haut + 0.03, 2.0, 0.4)
         _ligne(c, meta, taille=11.5, couleur=STAMP, premiere=True)
-        c = _texte(d, MARGE + 6.2, haut + 0.01, 5.2, 0.5)
-        _ligne(c, note, taille=12.5, couleur=MUTED, premiere=True)
-        haut += 0.62
+        c = _texte(d, MARGE + 6.2, haut + 0.02, 5.2, 0.5)
+        _ligne(c, note, taille=13, couleur=MUTED, premiere=True)
+        haut += 0.68
 
-    c = _texte(d, MARGE, haut + 0.3, COLONNE, 1.6)
+    c = _texte(d, MARGE, haut + 0.4, COLONNE, 1.6)
     _ligne(c, "All four are published by public buyers and downloadable by "
               "anyone, without registration.",
-           taille=14.5, couleur=INK, premiere=True, apres=14)
+           taille=15, couleur=INK, premiere=True, apres=16)
     _ligne(c, "The evidence library is fabricated, and the repository says so. "
               "Publishing which of a real company's certificates have lapsed is "
               "not something a demonstration gets to do.",
-           taille=14.5, gras=True, couleur=STAMP, interligne=1.4)
+           taille=15, gras=True, couleur=STAMP, interligne=1.4)
     _notes(d, """
-Twenty-five seconds. The last sentence buys more credibility than anything else
-in the video. Say it, and do not hurry it.
+25 s. The last sentence buys more credibility than anything else in the video.
+Say it, and do not hurry it.
 """)
 
-    # 6 ─ demo marker: French ---------------------------------------------
+    # 6 ─ the demonstration ------------------------------------------------
     d = _page(prs, INK)
-    _filet(d, MARGE, 2.9, largeur=1.6)
-    c = _texte(d, MARGE, 3.3, COLONNE, 2.0)
-    _ligne(c, "▶  Live run — DGAC, French", taille=40, gras=True, couleur=WHITE,
-           premiere=True, apres=16)
-    _ligne(c, "17 s on 2026-09-04. Nothing here is replayed.", taille=17,
-           couleur=PALE, police=SERIF)
+    _filet(d, MARGE, 2.35, largeur=1.6)
+    c = _texte(d, MARGE, 2.75, COLONNE, 2.6)
+    _ligne(c, "▶  Live, in both languages", taille=42, gras=True, couleur=WHITE,
+           premiere=True, apres=22)
+    _ligne(c, "DGAC, French — 17 s.        European Parliament, English — 35 s.",
+           taille=19, couleur=PALE, police=SERIF, apres=8)
+    _ligne(c, "Nothing here is replayed.", taille=19, couleur=PALE,
+           police=SERIF)
     c = _texte(d, MARGE, 6.2, COLONNE, 0.5)
     _ligne(c, "CUT THIS SLIDE IN THE EDIT — IT MARKS WHERE THE SCREEN "
               "RECORDING GOES", taille=10.5, couleur=MUTED, premiere=True,
            espacement=1.4)
     _notes(d, """
-python -X utf8 -m tender_compliance samples/real_dce/rc_2026SDCRH05.pdf \\
-    --pages 5-6 --today 2026-08-23 --html out/dgac.html
+65 s of screen recording, two runs. `python demo/walkthrough.py` drives both.
 
-Talk over the run. Then open out/dgac.html, stop talking, and let them read the
-'-9 d' row. Then one sentence: the requirement stays French because the tender
+RUN 1 — DGAC, French, 17 s:
+  python -X utf8 -m tender_compliance samples/real_dce/rc_2026SDCRH05.pdf
+      --pages 5-6 --today 2026-08-23 --html out/dgac.html
+Talk over it. Then open out/dgac.html, stop talking, and let them read the
+'-9 d' row. One sentence after: the requirement stays French because the tender
 is French and the code checks the quotation against the page it cites — the
 English sits beside it, never instead of it.
+
+RUN 2 — European Parliament, English, 35 s:
+  python -X utf8 -m tender_compliance samples/real_dce/itt_EP_COMM_2026.pdf
+      --today 2026-08-23
+READ THE BANNER OFF THE SCREEN; the count moves on every run (39 requirements,
+8 covered, 31 fatal on 2026-09-04). Then point at what is NOT there: no
+translation lines anywhere. The tool worked out that this document needs none.
 """)
 
-    # 7 ─ demo marker: English --------------------------------------------
-    d = _page(prs, INK)
-    _filet(d, MARGE, 2.9, largeur=1.6)
-    c = _texte(d, MARGE, 3.3, COLONNE, 2.0)
-    _ligne(c, "▶  Live run — European Parliament, English", taille=40,
-           gras=True, couleur=WHITE, premiere=True, apres=16)
-    _ligne(c, "Same tool, a tender written in English. Watch for what is not "
-              "on the screen.", taille=17, couleur=PALE, police=SERIF)
-    c = _texte(d, MARGE, 6.2, COLONNE, 0.5)
-    _ligne(c, "CUT THIS SLIDE IN THE EDIT — IT MARKS WHERE THE SCREEN "
-              "RECORDING GOES", taille=10.5, couleur=MUTED, premiere=True,
-           espacement=1.4)
-    _notes(d, """
-python -X utf8 -m tender_compliance samples/real_dce/itt_EP_COMM_2026.pdf \\
-    --today 2026-08-23
-
-35 s on 2026-09-04, which gave 39 requirements, 8 covered, 31 fatal. READ THE
-BANNER OFF THE SCREEN — the count moves on every run. Then point at what is NOT
-there: no translation lines anywhere. The tool worked out that this document
-does not need any.
-""")
-
-    # 8 ─ what it found ----------------------------------------------------
+    # 7 ─ what it found ----------------------------------------------------
     d = _page(prs)
     bas = _titre(d, "What the real files gave back")
     trouvailles = [
@@ -376,163 +363,126 @@ does not need any.
          "An insurance certificate valid today and expired on the day bids are "
          "due. Nobody catches that by reading — it is a subtraction."),
         ("27 / 34",
-         "Pages of the ANTAI file storing part of their text as images. A "
-         "mandatory declaration, legible on screen, invisible to every "
-         "extractor tested. So the tool refuses to call anything absent, and "
-         "names the pages to open by hand."),
+         "Pages of the ANTAI file storing part of their text as images. So the "
+         "tool refuses to call anything absent, and names the pages to open by "
+         "hand."),
         ("1 of 4",
-         "Requirements in the “English” EFSA pack that are written in French. "
-         "Found on the first run of a real document — which is why the language "
-         "is decided per requirement, not per file."),
+         "Requirements in the “English” EFSA pack that are written in French — "
+         "found on the first run of a real document."),
     ]
-    haut = bas
+    haut = bas + 0.2
     for chiffre, texte in trouvailles:
         c = _texte(d, MARGE, haut, 2.3, 0.75)
         _ligne(c, chiffre, taille=34, gras=True, couleur=STAMP, premiere=True)
-        c = _texte(d, MARGE + 2.5, haut + 0.05, 8.85, 1.3)
-        _ligne(c, texte, taille=14.5, couleur=INK, interligne=1.4, premiere=True)
-        haut += 1.55
+        c = _texte(d, MARGE + 2.5, haut + 0.07, 8.85, 1.3)
+        _ligne(c, texte, taille=15, couleur=INK, interligne=1.4, premiere=True)
+        haut += 1.5
 
-    c = _texte(d, MARGE, 6.55, COLONNE, 0.6)
+    c = _texte(d, MARGE, 6.5, COLONNE, 0.6)
     _ligne(c, "Every count moves between runs. Every quotation, and every "
               "verdict computed from it, does not.",
-           taille=13, couleur=MUTED, premiere=True)
+           taille=13.5, couleur=MUTED, premiere=True)
     _notes(d, """
-Twenty-five seconds. If ANTAI is not in your take, drop its line and keep the
-other two. The EFSA one is the most surprising and the cheapest to say.
+25 s. If ANTAI is not in your take, drop its line and keep the other two. The
+EFSA one is the most surprising and the cheapest to say.
 """)
 
-    # 9 ─ how it works -----------------------------------------------------
+    # 8 ─ how it does it ---------------------------------------------------
     d = _page(prs)
-    _filet(d, MARGE, 0.62, couleur=STAMP)
-    c = _texte(d, MARGE, 0.9, COLONNE, 0.6)
-    _ligne(c, "Nothing crosses without being checked", taille=27, gras=True,
-           couleur=INK, premiere=True)
+    _filet(d, MARGE, 0.55, couleur=STAMP)
+    c = _texte(d, MARGE, 0.83, COLONNE, 0.6)
+    _ligne(c, "How it does it", taille=30, gras=True, couleur=INK,
+           premiere=True)
     image, rapport = _rendre_le_schema()
     # Fit to the height that is actually left, then centre. Sizing by width and
     # hoping is what pushed the diagram's footnotes off the bottom edge.
-    disponible = HAUTEUR - 1.75 - 0.45
+    disponible = HAUTEUR - 1.55 - 1.2
     largeur = min(12.4, disponible * rapport)
-    d.shapes.add_picture(str(image), Inches((LARGEUR - largeur) / 2), Inches(1.75),
-                         width=Inches(largeur))
+    d.shapes.add_picture(str(image), Inches((LARGEUR - largeur) / 2),
+                         Inches(1.55), width=Inches(largeur))
+
+    _bloc(d, MARGE, 6.45, COLONNE, 0.78)
+    c = _texte(d, MARGE + 0.4, 6.58, COLONNE - 0.8, 0.55)
+    _ligne(c, "Both agents are Strands agents, and both are given tools — "
+              "page_text, quote_is_on_page, list_documents, "
+              "document_is_in_library. A tool the agent never calls changes "
+              "nothing: the verification runs either way.",
+           taille=13, couleur=WHITE, premiere=True, interligne=1.3)
     _notes(d, """
-Thirty-five seconds, over the diagram.
+35 s, over the diagram. This slide answers judging criterion 1.
 
 "Two bands. The model proposes on top, twice — the obligations in the text, then
 which document might answer each one. It decides nothing. Everything below is
 deterministic. A quote that is not on the page it cites is rejected, with a
 reason. A document that is not in the library, verbatim, is not a match. Dates
 and thresholds are arithmetic and never reach the model at all."
-""")
 
-    # 10 ─ Strands ---------------------------------------------------------
-    d = _page(prs)
-    bas = _titre(d, "Built with the Strands Agents SDK")
-    c = _texte(d, MARGE, bas, 11.4, 1.4)
-    _ligne(c, "Two agents, and four tools they are given:", taille=17,
-           couleur=INK, premiere=True, apres=14)
-    outils = [
-        ("@tool  page_text", "read a page of the tender"),
-        ("@tool  quote_is_on_page", "check a wording really appears on it"),
-        ("@tool  list_documents", "list the evidence library"),
-        ("@tool  document_is_in_library", "check a name is in it"),
-    ]
-    haut = bas + 0.75
-    for nom, glose in outils:
-        c = _texte(d, MARGE + 0.25, haut, 4.3, 0.4)
-        _ligne(c, nom, taille=14, gras=True, couleur=INK, police="Consolas",
-               premiere=True)
-        c = _texte(d, MARGE + 4.9, haut + 0.02, 6.4, 0.4)
-        _ligne(c, glose, taille=13.5, couleur=MUTED, premiere=True)
-        haut += 0.52
-
-    bloc = d.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(MARGE), Inches(5.1),
-                              Inches(COLONNE), Inches(1.75))
-    bloc.fill.solid()
-    bloc.fill.fore_color.rgb = INK
-    bloc.line.fill.background()
-    bloc.shadow.inherit = False
-    c = _texte(d, MARGE + 0.5, 5.42, COLONNE - 1.0, 1.2)
-    _ligne(c, "They are the same checks that run afterwards — so the agent can "
-              "correct a citation before it commits to one.",
-           taille=15.5, couleur=PALE, premiere=True, apres=10,
-           interligne=1.35)
-    _ligne(c, "But it cannot skip them: a tool it never calls changes nothing, "
-              "because the verification runs either way.",
-           taille=15.5, gras=True, couleur=WHITE, interligne=1.35)
-    _notes(d, """
-This slide answers judging criterion 1 directly. If you have ten seconds spare,
-add the line that shows the discipline is real rather than claimed:
-
-"The English translation is the one thing on the page a model wrote and nothing
+Then the tools, off the strip at the bottom. If ten seconds are spare: "the
+English translation is the one thing on the page a model wrote and nothing
 verified — so it is the one thing that decides nothing."
 """)
 
-    # 11 ─ who it is for ---------------------------------------------------
+    # 9 ─ who it is for ----------------------------------------------------
     d = _page(prs)
     bas = _titre(d, "Who it is for")
-    c = _texte(d, MARGE, bas, 11.4, 2.2)
+    c = _texte(d, MARGE, bas + 0.1, 11.4, 2.2)
     _ligne(c, "The person assembling the bid: a small firm without a bid "
               "office, a subcontractor, a first-time bidder.",
-           taille=20, couleur=INK, interligne=1.35, premiere=True, apres=14)
+           taille=21, couleur=INK, interligne=1.35, premiere=True, apres=16)
     _ligne(c, "The buyer already has this checklist. The bidder does not. "
               "Getting it wrong costs a contract that was winnable on the "
               "merits — which is why the tool would rather say “check this” "
               "than say “covered”.",
-           taille=15, couleur=MUTED, interligne=1.45)
+           taille=15.5, couleur=MUTED, interligne=1.45)
 
-    bloc = d.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(MARGE), Inches(4.75),
-                              Inches(0.045), Inches(1.5))
-    bloc.fill.solid()
-    bloc.fill.fore_color.rgb = STAMP
-    bloc.line.fill.background()
-    bloc.shadow.inherit = False
-    c = _texte(d, MARGE + 0.45, 4.85, 10.9, 1.4)
+    _bloc(d, MARGE, 4.9, 0.045, 1.5, couleur=STAMP)
+    c = _texte(d, MARGE + 0.45, 5.0, 10.9, 1.4)
     _ligne(c, "It does not write your bid, and it does not tell you that you "
               "are compliant.", taille=19, gras=True, couleur=INK,
            premiere=True, apres=8, interligne=1.3)
     _ligne(c, "It finds the gaps and shows you where to look.", taille=19,
            couleur=INK, interligne=1.3)
     _notes(d, """
-Twenty seconds. Saying plainly what it does not do reads as confidence, not as
-a caveat. Do not soften it.
+20 s. Saying plainly what it does not do reads as confidence, not as a caveat.
+Do not soften it.
 """)
 
-    # 12 ─ what comes next -------------------------------------------------
+    # 10 ─ what comes next -------------------------------------------------
     d = _page(prs)
     bas = _titre(d, "Recorded, and deliberately not built")
     suite = [
-        "One requirement with several satisfaction paths — « ou, à défaut… » — "
-        "matching the alternatives rather than only flagging them.",
+        "One requirement with several satisfaction paths — matching the "
+        "alternatives rather than only flagging them.",
         "Requirements the buyer can obtain itself from an official register, "
-        "and which are legitimately absent from any folder.",
-        "Groups of operators: the document checklist multiplies per member "
-        "while the capacity thresholds are assessed on the group as a whole.",
+        "legitimately absent from any folder.",
+        "Groups of operators: the checklist multiplies per member while the "
+        "capacity thresholds are assessed on the group as a whole.",
     ]
-    haut = bas
+    haut = bas + 0.25
     for element in suite:
         point = d.shapes.add_shape(MSO_SHAPE.OVAL, Inches(MARGE),
-                                   Inches(haut + 0.16), Inches(0.1), Inches(0.1))
+                                   Inches(haut + 0.18), Inches(0.1),
+                                   Inches(0.1))
         point.fill.solid()
         point.fill.fore_color.rgb = STAMP
         point.line.fill.background()
         point.shadow.inherit = False
         c = _texte(d, MARGE + 0.42, haut, 10.9, 1.1)
-        _ligne(c, element, taille=15.5, couleur=INK, interligne=1.4,
+        _ligne(c, element, taille=16, couleur=INK, interligne=1.4,
                premiere=True)
-        haut += 1.05
+        haut += 1.1
 
-    c = _texte(d, MARGE, haut + 0.35, COLONNE, 1.0)
+    c = _texte(d, MARGE, haut + 0.45, COLONNE, 1.0)
     _ligne(c, "Each one is in samples/real_requirements.json with the sentence "
               "that revealed it. Not one was visible from the specification — "
               "they came out of reading real documents.",
            taille=14, couleur=MUTED, interligne=1.4, premiere=True)
     _notes(d, """
-Fifteen seconds. This is the first slide to cut if you are over time — it is in
-the Devpost text and in the repository.
+15 s. First slide to cut if you are over time — it is in the Devpost text and in
+the repository.
 """)
 
-    # 13 ─ close -----------------------------------------------------------
+    # 11 ─ the URL ---------------------------------------------------------
     d = _page(prs, INK)
     _filet(d, MARGE, 2.35, largeur=1.6)
     c = _texte(d, MARGE, 2.75, COLONNE, 2.2)
@@ -546,8 +496,8 @@ the Devpost text and in the repository.
     _ligne(c, "github.com/Yoh5/tender-compliance-agent", taille=22, gras=True,
            couleur=WHITE, police="Consolas", premiere=True)
     _notes(d, """
-Ten seconds. Leave the URL on screen for a beat after you stop talking, then
-end. Do not add a thank-you slide.
+10 s. Leave the URL on screen for a beat after you stop talking, then end. No
+thank-you slide.
 """)
 
     return prs
@@ -557,7 +507,7 @@ def main() -> int:
     prs = construire()
     SORTIE.parent.mkdir(parents=True, exist_ok=True)
     prs.save(SORTIE)
-    print(f"{len(prs.slides.__iter__.__self__._sldIdLst)} slides → {SORTIE}")
+    print(f"{len(prs.slides._sldIdLst)} slides → {SORTIE}")
     return 0
 
 
