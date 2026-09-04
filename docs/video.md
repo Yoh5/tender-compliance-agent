@@ -31,6 +31,12 @@ Track: **Professional Agents**.
       leaner suite.
 - [ ] `.env` has a working key. Two shots make real API calls.
 - [ ] `out/` is empty, so the report is produced on camera.
+- [ ] **The four-document run is done BEFORE recording**, not during it:
+      `python -m tender_compliance samples/real_dce --today <date> --html-dir out`.
+      Three minutes of API calls is not something to sit through on camera.
+      Keep its closing summary block on screen somewhere you can cut to in
+      beat 7 — it is one screen that says what all four gave back. Then
+      empty `out/` again so the live run still produces its report.
 - [ ] Terminal at a size where a full row fits on one line without wrapping.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
 - [ ] `docs/deck.pptx` open, or exported to PDF. **Eleven slides, one per beat
@@ -49,6 +55,7 @@ the connection, so time your own dry run rather than trusting these:
 | European Parliament pack | 35 s | 39 requirements, 8 covered, 31 fatal |
 | ANTAI, full file | 52 s | 34 pages, 27 of them partly images |
 | EFSA pack | 13 s | small, and bilingual |
+| `samples/real_dce --html-dir out` | ~3 min | all four, one report each |
 
 **Be ready to re-run.** On 2026-09-01 an ANTAI run failed mid-flight on an API
 error and the second attempt succeeded. Have the command ready to fire again
@@ -164,8 +171,15 @@ One sentence on the English line, since the judges are the ones reading it:
 
 ## 7 · What it found — 25 s
 
-Read the banner off the screen for both runs. **Do not memorise a number.** The
-counts move on every run, and this repository has spoken a stale one four times.
+Cut to the summary block from the four-document run you did before recording,
+and read it off the screen. **Do not memorise a number.** The counts move on
+every run, and this repository has spoken a stale one five times.
+
+One sentence on why that block exists at all:
+
+> One command, four consultation files, four separate matrices. Nothing is
+> pooled — four tenders have four deadlines, and a combined total would
+> describe no tender that exists.
 
 Then the point only a real document could have produced:
 

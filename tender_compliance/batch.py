@@ -67,13 +67,13 @@ def targets(arguments: Sequence[str]) -> list[Path]:
     for argument in arguments:
         chemin = Path(argument)
         if any(caractere in argument for caractere in "*?["):
-            correspond = sorted(p for p in Path(chemin.anchor or ".").glob(
-                _motif_relatif(chemin)) if _est_un_document(p))
+            correspond = _documents(
+                Path(chemin.anchor or ".").glob(_motif_relatif(chemin)))
             if not correspond:
                 raise ValueError(f"nothing matches {argument}")
             trouves += correspond
         elif chemin.is_dir():
-            dedans = sorted(p for p in chemin.iterdir() if _est_un_document(p))
+            dedans = _documents(chemin.iterdir())
             if not dedans:
                 raise ValueError(f"no consultation file in {argument}")
             trouves += dedans
@@ -102,6 +102,18 @@ def _motif_relatif(chemin: Path) -> str:
 
 def _est_un_document(chemin: Path) -> bool:
     return chemin.is_file() and chemin.suffix.lower() in SUFFIXES
+
+
+def _documents(entrees: Iterable[Path]) -> list[Path]:
+    """The consultation files among these entries, in a stable order.
+
+    Sorted here rather than left to the filesystem. NTFS happens to hand back
+    directory entries in name order and ext4 hands them back in hash order, so
+    a run on a laptop and the same run in a container would otherwise analyse
+    the same folder in two different orders — and write the reports in two
+    different orders too, which reads as two different results.
+    """
+    return sorted(chemin for chemin in entrees if _est_un_document(chemin))
 
 
 def each(

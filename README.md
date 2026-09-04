@@ -236,7 +236,8 @@ Early. This repository was created for the hackathon and starts from zero.
 | `extraction.py` — reading a PDF, and knowing when it could not be read | implemented, tested |
 | `model.py` — provider selection, Anthropic or OpenAI | implemented, tested |
 | `tender.py` — the pipeline, and the agent that feeds it | implemented, tested |
-| `__main__.py` — `python -m tender_compliance <pdf>` | implemented |
+| `__main__.py` — `python -m tender_compliance <pdf...>` | implemented |
+| `batch.py` — a folder of consultation files in one command | implemented, tested |
 | `obligations.py` — extracting obligations, and refusing unanchored ones | implemented, tested |
 | `evidence.py` — matching evidence, and refusing to invent it | implemented, tested |
 | `untrusted.py` — spotting text in a tender aimed at the model | implemented, tested |
@@ -259,6 +260,19 @@ python -m tender_compliance samples/real_dce/rc_ANTAI_2026.pdf \
   --deadline 2026-10-28 --html out/antai.html
 ```
 
+A folder or a wildcard analyses every consultation file it holds, one report
+each, and prints a closing line per document:
+
+```bash
+python -m tender_compliance samples/real_dce --html-dir out
+```
+
+Nothing is pooled across documents. Four tenders have four deadlines and four
+matrices, and a combined obligation count would describe no tender that exists.
+One document failing — an API call dropping mid-run does happen — costs that
+document and no other; the summary names what failed and the exit code is
+non-zero.
+
 `python demo/walkthrough.py` runs the same thing shot by shot; the recording
 script is in [docs/video.md](docs/video.md).
 
@@ -272,12 +286,14 @@ submission period, which opened on 10 August.
 submission. Dependencies are the ones in `requirements.txt`, used as published:
 Strands Agents (the SDK the hackathon requires), PyMuPDF, and pytest.
 
-**Third-party material, all public.** `samples/real_dce/` holds two règlements
-de la consultation published by French public buyers — the Ministry of the
-Interior (ANTAI) and the DGAC — downloaded from the state procurement platform,
-where they are freely available without registration. They are the buyers' own
-consultation rules, and they are committed so that a reader can verify the
-claims the tests make about them. Provenance for every quoted requirement is in
+**Third-party material, all public.** `samples/real_dce/` holds four
+consultation files published by public buyers, all freely downloadable without
+registration. Two French règlements de la consultation from the state
+procurement platform — the Ministry of the Interior (ANTAI) and the DGAC — and
+two English invitations to tender from the EU tendering portal, the European
+Parliament and EFSA, © European Union, reused under Commission Decision
+2011/833/EU. They are the buyers' own consultation rules, and they are
+committed so that a reader can verify the claims the tests make about them. Provenance for every quoted requirement is in
 `samples/real_requirements.json`.
 
 **The evidence library is fabricated**, and says so in the file. Publishing

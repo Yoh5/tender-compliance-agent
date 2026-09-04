@@ -88,7 +88,11 @@ SHOTS = [
     ),
     (
         "Beat 7 — what it found",
-        "Say the EFSA point, which only a real document could have produced: "
+        "Cut to the summary block of the four-document run you did BEFORE "
+        "recording — `python -m tender_compliance samples/real_dce "
+        "--html-dir out` — and read it off the screen. Say: one command, four "
+        "files, four separate matrices, nothing pooled. Then say the EFSA "
+        "point, which only a real document could have produced: "
         "that pack is supposedly English, and its first run returned four "
         "requirements — three English, and one beginning « La Déclaration sur "
         "l'honneur relative à l'exclusion ». French, inside an English pack. "

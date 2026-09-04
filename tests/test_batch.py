@@ -28,7 +28,14 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from tender_compliance.batch import Outcome, destinations, each, summary, targets
+from tender_compliance.batch import (
+    Outcome,
+    _documents,
+    destinations,
+    each,
+    summary,
+    targets,
+)
 
 RACINE = Path(__file__).resolve().parent.parent
 DCE = RACINE / "samples" / "real_dce"
@@ -72,13 +79,21 @@ class TestWhichFilesGetAnalysed(unittest.TestCase):
             self.assertEqual([p.name for p in targets([str(dossier)])],
                              ["a.pdf", "b.pdf"])
 
-    def test_a_directory_is_read_in_a_stable_order(self):
-        """Two runs of the same command must analyse the same files in the same
-        order, or the reports land in a different order in the folder and a
-        second run looks like a different result."""
+    def test_a_listing_is_put_in_order_here_and_not_by_the_filesystem(self):
+        """Asserting that `targets` returns a sorted list proves nothing on
+        Windows: NTFS hands back directory entries in name order already, so a
+        version that sorted nothing would pass. ext4 hands them back in hash
+        order, and the same folder would be analysed — and its reports written —
+        in a different order on a laptop and in a container.
+
+        So the order is pinned on the function that does the sorting, with an
+        input whose order is chosen here rather than by the filesystem.
+        """
         with TemporaryDirectory() as tmp:
-            dossier = _dossier(tmp, "z.pdf", "m.pdf", "a.pdf")
-            self.assertEqual(targets([str(dossier)]), sorted(targets([str(dossier)])))
+            dossier = _dossier(tmp, "a.pdf", "m.pdf", "z.pdf")
+            melange = [dossier / "z.pdf", dossier / "a.pdf", dossier / "m.pdf"]
+            self.assertEqual([p.name for p in _documents(melange)],
+                             ["a.pdf", "m.pdf", "z.pdf"])
 
     def test_a_directory_ignores_what_is_not_a_pdf(self):
         with TemporaryDirectory() as tmp:
@@ -130,17 +145,25 @@ class TestWhichFilesGetAnalysed(unittest.TestCase):
             self.assertIn("absent.pdf", str(leve.exception))
 
     def test_a_folder_with_no_pdf_in_it_is_an_error(self):
+        """Named alongside a folder that does hold one, so the failure has to
+        come from this argument rather than from the run ending up empty. A
+        folder you pointed at and that gave nothing is a mistake worth stopping
+        for, even when the other three arguments worked."""
         with TemporaryDirectory() as tmp:
-            dossier = Path(tmp)
-            (dossier / "README.md").write_text("empty", encoding="utf-8")
-            with self.assertRaises(ValueError):
-                targets([str(dossier)])
+            vide = Path(tmp) / "vide"
+            vide.mkdir()
+            (vide / "README.md").write_text("no tender here", encoding="utf-8")
+            plein = _dossier(str(Path(tmp) / "plein"), "a.pdf")
+            with self.assertRaises(ValueError) as leve:
+                targets([str(plein), str(vide)])
+            self.assertIn("vide", str(leve.exception))
 
     def test_a_wildcard_matching_nothing_is_an_error(self):
         with TemporaryDirectory() as tmp:
             dossier = _dossier(tmp, "a.pdf")
-            with self.assertRaises(ValueError):
-                targets([str(dossier / "zz_*.pdf")])
+            with self.assertRaises(ValueError) as leve:
+                targets([str(dossier / "a.pdf"), str(dossier / "zz_*.pdf")])
+            self.assertIn("zz_", str(leve.exception))
 
     def test_nothing_asked_for_is_an_error_rather_than_an_empty_run(self):
         with self.assertRaises(ValueError):
@@ -195,14 +218,22 @@ class TestOneFailureDoesNotEndTheBatch(unittest.TestCase):
             each(self._trois(), run)
 
     def test_each_document_is_announced_before_it_is_run(self):
+        """Before, not after: the announcement is a heading over a wait that
+        lasts most of a minute. Printed afterwards it labels a report the reader
+        has already finished scrolling past."""
         vus = []
 
         def announce(rang, total, chemin):
-            vus.append((rang, total, chemin.name))
+            vus.append(f"announce {rang}/{total} {chemin.name}")
 
-        each(self._trois(), lambda c: _Analyse(c.name), announce=announce)
-        self.assertEqual(vus, [(1, 3, "un.pdf"), (2, 3, "deux.pdf"),
-                               (3, 3, "trois.pdf")])
+        def run(chemin):
+            vus.append(f"run {chemin.name}")
+            return _Analyse(chemin.name)
+
+        each(self._trois(), run, announce=announce)
+        self.assertEqual(vus, ["announce 1/3 un.pdf", "run un.pdf",
+                               "announce 2/3 deux.pdf", "run deux.pdf",
+                               "announce 3/3 trois.pdf", "run trois.pdf"])
 
     def test_a_document_that_failed_was_still_announced(self):
         vus = []
