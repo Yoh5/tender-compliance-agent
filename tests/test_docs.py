@@ -109,6 +109,34 @@ class TestTheTeleprompterSurvivesTheConsole(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr[-800:])
         self.assertNotIn("UnicodeEncodeError", r.stderr)
 
+    def test_the_preparation_shot_can_be_skipped(self):
+        """Shot one is three minutes of paid API calls. A rehearsal that cannot
+        get past it either pays for it again or abandons the teleprompter, and
+        the second is what actually happens."""
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("walkthrough", self.SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        for reponse in ("s", "S", "skip", " s "):
+            self.assertFalse(module._lance(reponse), f"{reponse!r} should skip")
+        for reponse in ("", " ", "\n", "go"):
+            self.assertTrue(module._lance(reponse), f"{reponse!r} should run")
+
+    def test_the_first_shot_is_the_one_that_is_not_filmed(self):
+        """It runs every document and costs minutes. Anywhere but first, it sits
+        in the middle of a take."""
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("walkthrough", self.SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        titre, note, commande = module.SHOTS[0]
+        self.assertIn("NOT on camera", titre)
+        self.assertIn("samples/real_dce", commande)
+
     def test_every_shot_points_at_a_file_that_exists(self):
         import ast
 

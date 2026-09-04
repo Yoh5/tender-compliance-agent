@@ -6,7 +6,13 @@ Nothing here is faked or replayed: every command is the real one, run live. What
 this removes is the other kind of risk — mistyping a flag on take four, or
 pausing to remember which file shows which finding while the microphone is on.
 
-This covers beats 5 to 8 of `docs/video.md`, the part that is a screen
+Shot 1 is the exception: it is the preparation run, three minutes of API calls
+over all four consultation files, and it is not filmed. It is here so that the
+one command nobody should improvise on camera is the same command every time,
+and so the summary block shown in beat 7 comes from a run that really happened.
+Press s to skip it once it has been done.
+
+The rest covers beats 5 to 8 of `docs/video.md`, the part that is a screen
 recording. Beats 1 to 4 and 9 to 11 are slides and are not driven from here.
 
 The two runs were chosen because they answer different objections. DGAC is
@@ -52,6 +58,16 @@ tenders carefully."""
 
 SHOTS = [
     (
+        "BEFORE YOU RECORD — all four documents, ~3 min, NOT on camera",
+        "The run whose closing summary you cut to in beat 7. One report per "
+        "document into out/batch/, which leaves out/ empty so the live run in "
+        "shot 3 still produces its report in front of the jury. Three minutes "
+        "of API calls is not something to sit through on camera. Press s to "
+        "skip if you have already done it today.",
+        [sys.executable, "-X", "utf8", "-m", "tender_compliance",
+         "samples/real_dce", "--today", "2026-08-23", "--html-dir", "out/batch"],
+    ),
+    (
         "Beat 5 — the documents",
         "Show samples/real_dce/ on screen. Say: four real consultation files, "
         "published by public buyers, downloadable by anyone. Two French, two "
@@ -88,9 +104,8 @@ SHOTS = [
     ),
     (
         "Beat 7 — what it found",
-        "Cut to the summary block of the four-document run you did BEFORE "
-        "recording — `python -m tender_compliance samples/real_dce "
-        "--html-dir out` — and read it off the screen. Say: one command, four "
+        "Cut to the closing summary of shot 1, the run you did before "
+        "recording, and read it off the screen. Say: one command, four "
         "files, four separate matrices, nothing pooled. Then say the EFSA "
         "point, which only a real document could have produced: "
         "that pack is supposedly English, and its first run returned four "
@@ -113,6 +128,16 @@ SHOTS = [
 ]
 
 
+def _lance(reponse: str) -> bool:
+    """Whether that keypress means run the command.
+
+    Anything starting with s skips. The preparation shot costs three minutes
+    of API calls and only needs doing once a day; without a way past it, the
+    second rehearsal either pays for it again or abandons the teleprompter.
+    """
+    return not reponse.strip().lower().startswith("s")
+
+
 def main() -> int:
     for number, (title, note, command) in enumerate(SHOTS, start=1):
         print(f"\n{RULE * 72}\n  SHOT {number}/{len(SHOTS)}  {title}\n{RULE * 72}")
@@ -120,13 +145,16 @@ def main() -> int:
         if command:
             print(f"  $ {' '.join(command)}\n")
         try:
-            input("  [Enter] to run this shot, Ctrl-C to stop ")
+            reponse = input(
+                "  [Enter] to run this shot · s to skip · Ctrl-C to stop ")
         except (KeyboardInterrupt, EOFError):
             print("\nstopped")
             return 0
-        if command:
+        if command and _lance(reponse):
             print()
             subprocess.run(command, cwd=ROOT, env=CHILD_ENV)
+        elif command:
+            print("  skipped")
     print("\n  Done. out/dgac.html is the one report to open on camera.\n")
     return 0
 

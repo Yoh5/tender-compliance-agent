@@ -31,12 +31,14 @@ Track: **Professional Agents**.
       leaner suite.
 - [ ] `.env` has a working key. Two shots make real API calls.
 - [ ] `out/` is empty, so the report is produced on camera.
-- [ ] **The four-document run is done BEFORE recording**, not during it:
-      `python -m tender_compliance samples/real_dce --today <date> --html-dir out`.
-      Three minutes of API calls is not something to sit through on camera.
-      Keep its closing summary block on screen somewhere you can cut to in
-      beat 7 — it is one screen that says what all four gave back. Then
-      empty `out/` again so the live run still produces its report.
+- [ ] **The four-document run is done BEFORE recording**, not during it.
+      It is shot 1 of `python demo/walkthrough.py`, so it is the same
+      command every time and never improvised on camera; press `s` to skip
+      it on a second rehearsal. Three minutes of API calls is not something
+      to sit through while recording. It writes into `out/batch/`, which
+      leaves `out/` empty for the live run, and its closing summary is the
+      one screen that says what all four documents gave back — keep it
+      somewhere you can cut to in beat 7.
 - [ ] Terminal at a size where a full row fits on one line without wrapping.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
 - [ ] `docs/deck.pptx` open, or exported to PDF. **Eleven slides, one per beat
@@ -55,7 +57,7 @@ the connection, so time your own dry run rather than trusting these:
 | European Parliament pack | 35 s | 39 requirements, 8 covered, 31 fatal |
 | ANTAI, full file | 52 s | 34 pages, 27 of them partly images |
 | EFSA pack | 13 s | small, and bilingual |
-| `samples/real_dce --html-dir out` | ~3 min | all four, one report each |
+| `samples/real_dce --html-dir out/batch` | ~3 min | all four, one report each |
 
 **Be ready to re-run.** On 2026-09-01 an ANTAI run failed mid-flight on an API
 error and the second attempt succeeded. Have the command ready to fire again
@@ -171,8 +173,8 @@ One sentence on the English line, since the judges are the ones reading it:
 
 ## 7 · What it found — 25 s
 
-Cut to the summary block from the four-document run you did before recording,
-and read it off the screen. **Do not memorise a number.** The counts move on
+Cut to the closing summary of shot 1, the four-document run you did before
+recording, and read it off the screen. **Do not memorise a number.** The counts move on
 every run, and this repository has spoken a stale one five times.
 
 One sentence on why that block exists at all:
