@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compliance check — rc_2026SDCRH05.pdf</title>
+<style>:root {
+  color-scheme: light dark;
+  --paper:  #f6f8fb;   /* cool administrative stock, not cream */
+  --card:   #ffffff;
+  --ink:    #14203a;   /* the navy of French official print */
+  --muted:  #5b6880;
+  --rule:   #ccd6e4;
+  --stamp:  #a8243b;   /* madder red; blockers only, nothing else */
+  --review: #7d5c12;
+  --good:   #2c5f4e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0e1524; --card: #141d30; --ink: #e6ecf6; --muted: #93a1ba;
+    --rule: #2a3852; --stamp: #ef8093; --review: #d9b25c; --good: #6dc4a5;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 2.5rem 1.25rem 5rem;
+  background: var(--paper); color: var(--ink);
+  font: 400 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 60rem; margin: 0 auto; }
+
+.eyebrow {
+  margin: 0 0 .35rem; font-size: .72rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--muted);
+}
+h1 {
+  margin: 0; font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 600;
+  letter-spacing: -.015em; overflow-wrap: anywhere;
+}
+.facts {
+  display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem;
+  margin: 1.4rem 0 0; padding: 0 0 1.4rem; border-bottom: 2px solid var(--ink);
+}
+.facts div { min-width: 0; }
+.facts dt {
+  font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted);
+}
+.facts dd {
+  margin: .2rem 0 0; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: .95rem;
+}
+
+.verdict { margin: 1.6rem 0 0; font-size: 1.15rem; font-weight: 500; }
+.verdict .blocking { color: var(--stamp); }
+
+.caution {
+  margin: 1.4rem 0 0; padding: .85rem 1rem;
+  border: 1px solid var(--rule); border-left: 3px solid var(--review);
+  background: var(--card); font-size: .9rem; color: var(--muted);
+}
+
+.matrix { margin: 2rem 0 0; display: grid; gap: .6rem; }
+
+.row {
+  background: var(--card); border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule);
+  padding: 1rem 1.1rem;
+  display: grid; grid-template-columns: 8.5rem 1fr; gap: .3rem 1.1rem;
+  break-inside: avoid;
+}
+.row.blocks  { border-left-color: var(--stamp); }
+.row.review  { border-left-color: var(--review); }
+.row.covered { border-left-color: var(--good); }
+
+.stamp {
+  grid-row: 1 / span 3; align-self: start;
+  font-size: .68rem; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 600;
+}
+.blocks  .stamp { color: var(--stamp); }
+.review  .stamp { color: var(--review); }
+.covered .stamp { color: var(--good); }
+
+.requirement {
+  margin: 0; font-family: ui-serif, "Iowan Old Style", "Palatino Linotype",
+  Palatino, Georgia, serif;
+  font-size: 1.02rem; line-height: 1.5; overflow-wrap: anywhere;
+}
+/* The translation. Sans-serif against the quotation's serif, muted, and marked
+   EN — three signals that this is a rendering of the line above and not a
+   second requirement. The document is what counts; this only helps read it. */
+.gloss {
+  grid-column: 2; margin: .3rem 0 0;
+  font-size: .86rem; line-height: 1.45; color: var(--muted);
+  padding-left: .6rem; border-left: 2px solid var(--rule);
+}
+.gloss::before {
+  content: "EN"; margin-right: .45rem;
+  font-size: .62rem; letter-spacing: .1em; font-weight: 600;
+  color: var(--rule); vertical-align: .1em;
+}
+
+.where, .note {
+  grid-column: 2;
+  font-size: .82rem; color: var(--muted); margin: 0;
+}
+.where { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.where b { font-weight: 600; color: var(--ink); }
+
+/* The one number worth remembering. */
+.slack {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.slack.late { color: var(--stamp); }
+
+.grade {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: .78rem; font-weight: 600; color: var(--good);
+}
+.grade.lost { color: var(--stamp); }
+
+.pile {
+  font-size: .7rem; letter-spacing: .04em; text-transform: uppercase;
+  padding: .1rem .4rem; border: 1px solid var(--rule); border-radius: 3px;
+  color: var(--muted);
+}
+
+.dropped { margin: 2.6rem 0 0; }
+.dropped h2 {
+  font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600; margin: 0 0 .7rem;
+  padding-bottom: .5rem; border-bottom: 1px solid var(--rule);
+}
+.dropped li { margin: 0 0 .55rem; font-size: .85rem; color: var(--muted); }
+.dropped q { font-family: ui-serif, Georgia, serif; color: var(--ink); }
+
+footer {
+  margin: 3rem 0 0; padding-top: 1rem; border-top: 1px solid var(--rule);
+  font-size: .78rem; color: var(--muted);
+}
+
+@media print {
+  body { background: #fff; color: #000; padding: 0; font-size: 11pt; }
+  .row { border-color: #999; background: #fff; }
+  .caution { background: #fff; }
+}
+</style>
+</head><body><main>
+<p class="eyebrow">Bid file · compliance check</p>
+<h1>rc_2026SDCRH05.pdf</h1>
+<dl class="facts">
+<div><dt>Bids due</dt><dd>2026-10-09</dd></div>
+<div><dt>Days left</dt><dd>47</dd></div>
+<div><dt>Ends the bid</dt><dd>38</dd></div>
+<div><dt>Correctable</dt><dd>3</dd></div>
+<div><dt>Read by</dt><dd>openai:gpt-5.4-mini-2026-03-17</dd></div>
+</dl>
+<p class="verdict"><span class="blocking">43 obligations · 2 covered · 30 missing · 1 expired before the deadline · 10 to review · 38 of them fatal to the candidature</span></p>
+<section class="matrix">
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">- les effectifs moyens annuels du candidat et l&#x27;importance du personnel d&#x27;encadrement pour chacune des trois dernières années ;</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Pièces relatives au pouvoir des personnes habilitées à engager le candidat</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Présentation d&#x27;une liste des activités de formations exécutées au cours des trois dernières années, notamment pour des clients publics, assortie d&#x27;attestations de bonne exécution pour les formations réalisées.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p6</p>
+<p class="note">nothing in the library answers this (closest: Liste de références clients 2023-2026, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Ces attestations indiquent le montant, la date et le lieu d&#x27;exécution des travaux et précisent s&#x27;ils ont été effectués selon les règles de l&#x27;art et menés régulièrement à bonne fin</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p6</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">L’acte d&#x27;engagement complété, daté et signé électroniquement par la personne habilitée à engager la société et son annexe financière auquel le candidat soumissionne.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p7 &nbsp;·&nbsp; <span class="pile">offer — correctable</span></p>
+<p class="note">nothing in the library answers this (closest: Attestation de régularité fiscale (DGFiP), which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Le mémoire technique détaillé.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p7 &nbsp;·&nbsp; <span class="pile">offer — correctable</span></p>
+<p class="note">nothing in the library answers this (closest: Liste de références clients 2023-2026, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">les attestations et certificats prouvant qu&#x27;il a satisfait à ses obligations fiscales et sociales, conformément à l&#x27;arrêté du 25 mai 2016 fixant la liste des impôts, taxes, contributions ou cotisations sociales donnant lieu à la délivrance de certificats pour l&#x27;attribution de marchés publics et de contrats de concession.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p11</p>
+<p class="note">nothing in the library answers this (closest: Attestation de régularité fiscale (DGFiP), Attestation de vigilance URSSAF, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Le candidat doit utiliser une signature électronique avancée reposant sur un certificat qualifié au sens du règlement n° 910/2014 du Parlement européen et du Conseil du 23 juillet 2014 sur l&#x27;identification électronique et les services de confiance pour les transactions électroniques au sein de l’accord-cadre intérieur (eIDAS).</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p12</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Le certificat de signature électronique du signataire respecte au moins le niveau de sécurité préconisé.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p12</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Le candidat n&#x27;a aucun justificatif à fournir sur le certificat de signature utilisé pour signer sa réponse.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p12</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO/IEC 27001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Le candidat s’assure que le certificat qu’il utilise est au moins conforme au niveau de sécurité préconisé sur le profil d’acheteur, et donne tous les éléments nécessaires à la vérification de cette conformité par l’acheteur.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p12</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">le candidat utilise le dispositif de création de signature électronique de son choix</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p13</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO/IEC 27001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">produire des formats de signature XAdES, CAdES ou PadES</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p13</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO/IEC 27001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">permettre la vérification en transmettant en parallèle les éléments nécessaires pour procéder à la vérification de la validité de la signature et de l’intégrité du document, et ce, gratuitement</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p13</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO/IEC 27001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">le lien sur lequel l’outil de vérification de signature peut être récupéré, avec une notice d’explication et les pré-requis d’installation (type d’exécutable, systèmes d’exploitation supportés, etc.). La fourniture d’une notice en français est souhaitée</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p13</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO/IEC 27001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">le mode de vérification alternatif en cas d’installation impossible pour l’acheteur (contact à joindre, support distant, support sur site, etc.)</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p13</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO/IEC 27001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Le mémoire technique des candidats doit impérativement être présenté selon l’ordre des rubriques suivantes.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14 &nbsp;·&nbsp; <span class="pile">offer — correctable</span></p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO/IEC 27001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Décrire la durée de chaque session et le déroulé pédagogique de chaque préparation</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Détailler l&#x27;articulation des sessions en synchrone avec les devoirs par correspondance et présenter un calendrier-type pour chaque préparation (session de méthodologie, transmission des devoirs/corrigés, session de bilan)</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Méthodes pédagogiques employées (cas pratique, notes, mémoires, rapport, QCM, entretiens, conférence conseil…)</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Donner des exemples</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: Liste de références clients 2023-2026, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Fiche pédagogique adaptée pour chaque type de préparation listée au CCTP ;</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Description des supports proposés pendant ou à l&#x27;issue de la formation</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO 9001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Fournir une grille de notation d&#x27;une copie ainsi que les moyens d&#x27;appréciation du niveau et les moyens mis en œuvre pour permettre aux apprenants d&#x27;atteindre le niveau requis</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Décrire la démarche qualité (respect des programmes, éthique des formateurs, adaptabilité des contenus, respect de la confidentialité…)</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: Certificat ISO 9001, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Préciser l’organisation du suivi administratif (équipe ou interlocuteur(s) dédiés, modalités de remise des listes des présences, rapport ou bilan de la session de formation animée…) et les délais de remise/retour des documents à l’acheteur</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Décrire comment sont garanties les compétences des formateurs (expérience dans la préparation aux concours et examens administratifs en lien avec les épreuves et matières scientifiques, références…joindre les curriculum vitae)</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Décrire les outils numériques utilisés (logiciels de connexion, plateformes en ligne pour les tests et l’accès aux documents pour les préparations par correspondance, outils interactifs/participatifs…...)</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Fournir un lien de test de la plateforme en ligne ou une vidéo démonstrative</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">missing</span>
+<blockquote class="requirement">Décrire les supports mis à disposition des apprenants pour les formations en ligne (lien de connexion à des sites sécurisés, devoirs et corrigés types via plateformes etc)</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p14</p>
+<p class="note">nothing in the library answers this (closest: CV des intervenants pressentis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row blocks">
+<span class="stamp">expires too soon</span>
+<blockquote class="requirement">Preuve d&#x27;une assurance pour les risques professionnels</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5 &nbsp;·&nbsp; → Attestation d&#x27;assurance responsabilité civile professionnelle p1 &nbsp;·&nbsp; <span class="slack late">-9 d</span></p>
+<p class="note">valid today, expired on the submission date</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">Lettre de candidature ou formulaire DC1 (téléchargeable à partir du lien https://www.economie.gouv.fr/daj/formulaires-declaration-du-candidat) ou équivalent, dûment rempli, et daté.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5</p>
+<p class="note">this is a form to fill in for this tender, not a document to find — an evidence library cannot answer it</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">En cas d&#x27;attribution du marché à un groupement d&#x27;opérateurs économiques, un document d&#x27;habilitation devra être signé par chaque les autres membres du groupement lors de la phase d&#x27;attribution</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5</p>
+<p class="note">this is a form to fill in for this tender, not a document to find — an evidence library cannot answer it</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">Déclaration du candidat ou formulaire DC2 (téléchargeable à partir du lien https://www.economie.gouv.fr/daj/formulaires-declaration-du-candidat), ou équivalent dûment rempli et daté</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5</p>
+<p class="note">this is a form to fill in for this tender, not a document to find — an evidence library cannot answer it</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">déclaration concernant le chiffre d&#x27;affaires global et le chiffre d&#x27;affaires concernant les prestations objet du marché, réalisés au cours des trois derniers exercices disponibles</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5</p>
+<p class="note">this is a form to fill in for this tender, not a document to find — an evidence library cannot answer it</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">Déclaration indiquant les effectifs moyens annuels du candidat et l&#x27;importance du personnel dédié aux formations proprement dites ainsi qu’à l’encadrement pour chacune des trois dernières années</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5</p>
+<p class="note">this is a form to fill in for this tender, not a document to find — an evidence library cannot answer it</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">Déclaration sur l’honneur précisant que le candidat n’est pas, au moment du dépôt de la candidature, en situation de redressement judiciaire, ou, à défaut, la copie du ou des jugements prononcés relatif au placement en redressement judiciaire</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p6</p>
+<p class="note">this is a form to fill in for this tender, not a document to find — an evidence library cannot answer it (closest: Extrait Kbis, which the matcher judged does not answer it)</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">L‘attestation de l’Administration fiscale en cas de non-assujettissement à la TVA pour les organismes de formation.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p7</p>
+<p class="note">nothing found, but this requirement applies only in a stated case — check whether it concerns this bidder at all (closest: Attestation de régularité fiscale (DGFiP), which the matcher judged does not answer it)</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">le cas échéant le DC4</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p7</p>
+<p class="note">this is a form to fill in for this tender, not a document to find — an evidence library cannot answer it</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">Un zip signé ne vaut pas signature des documents qu’il contient. En cas de fichier zippé, chaque document pour lequel une signature est requise doit être signé séparément.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p12</p>
+<p class="note">nothing found, but this requirement applies only in a stated case — check whether it concerns this bidder at all</p>
+</article>
+<article class="row review">
+<span class="stamp">to review</span>
+<blockquote class="requirement">Le candidat doit respecter les conditions relatives : - au certificat de signature du signataire ; - au dispositif de création de signature électronique utilisé (logiciel, service en ligne, parapheur le cas échéant), devant produire des jetons de signature1 conformes aux formats réglementaires dans l’un des trois formats acceptés.</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p12</p>
+<p class="note">nothing found, but this requirement applies only in a stated case — check whether it concerns this bidder at all</p>
+</article>
+<article class="row covered">
+<span class="stamp">covered</span>
+<blockquote class="requirement">- le chiffre d&#x27;affaires global et le chiffre d&#x27;affaires concernant les prestations objet du contrat, réalisés au cours des trois derniers exercices disponibles ;</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p5 &nbsp;·&nbsp; → Bilans et comptes de résultat des trois derniers exercices p1</p>
+<p class="note">Les bilans et comptes de résultat peuvent fournir le chiffre d&#x27;affaires global et, s&#x27;ils sont détaillés, celui des prestations du contrat sur trois exercices.</p>
+</article>
+<article class="row covered">
+<span class="stamp">covered</span>
+<blockquote class="requirement">Le RIB du candidat</blockquote>
+<p class="where"><b>rc_2026SDCRH05.pdf</b> p7 &nbsp;·&nbsp; <span class="pile">offer — correctable</span> &nbsp;·&nbsp; → Relevé d&#x27;identité bancaire p1</p>
+<p class="note">C&#x27;est le RIB du candidat.</p>
+</article>
+</section>
+<section class="dropped">
+<h2>6 proposals the document did not support</h2><ul>
+<li><q>La candidature comporte les éléments définis ci-dessous :</q> — p5: not found on page 5, which was read in full</li>
+<li><q>1° La lettre de candidature ou le formulaire DC1, dûment rempli, daté et signé par une personne dûment habilitée à engager le candidat, ou pour les groupements d&#x27;opérateurs économiques, par chacun des membres du groupement ;</q> — p5: not found on page 5, which was read in full</li>
+<li><q>2° La déclaration du candidat ou le formulaire DC2, dûment rempli, daté et signé par une personne dûment habilitée à engager le candidat, accompagnée des renseignements et documents suivants :</q> — p5: not found on page 5, which was read in full</li>
+<li><q>- la copie du ou des jugements prononcés, si le candidat est en redressement judiciaire ;</q> — p5: not found on page 5, which was read in full</li>
+<li><q>- la déclaration sur l&#x27;honneur pour justifier que le candidat n&#x27;entre dans aucun des cas mentionnés aux articles L2141-1 à L2141-11 du code de la commande publique et qu&#x27;il est en règle au regard des articles L5212-1 à L5212-11 du code du travail concernant l&#x27;emploi des travailleurs handicapés ;</q> — p5: not found on page 5, which was read in full</li>
+<li><q>- les références du candidat en matière de prestations similaires sur les trois dernières années, indiquant le montant, la date et le destinataire public ou privé ;</q> — p5: not found on page 5, which was read in full</li>
+</ul></section>
+<footer>
+Every requirement above is quoted from the consultation file and was located on the page cited. Dates are computed, not inferred. Proposals the document did not support are listed rather than dropped.
+</footer></main></body></html>

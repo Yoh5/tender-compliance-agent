@@ -273,6 +273,19 @@ One document failing — an API call dropping mid-run does happen — costs that
 document and no other; the summary names what failed and the exit code is
 non-zero.
 
+### One run, committed as it came out
+
+[`docs/sample_report_dgac.html`](docs/sample_report_dgac.html) is a real
+report, unedited: the DGAC consultation file read end to end —
+43 obligations, 2 covered, 30 missing, and one insurance certificate that is
+valid today and will not be valid on the day bids are due.
+
+It is committed so that the output of this tool can be read without an API
+key. GitHub renders `.html` as source, so download it and open it, or read it
+through [htmlpreview](https://htmlpreview.github.io/?https://raw.githubusercontent.com/Yoh5/tender-compliance-agent/main/docs/sample_report_dgac.html).
+The file is self-contained — styles inlined, no script, no network call —
+which is the point of a report somebody is meant to forward.
+
 `python demo/walkthrough.py` runs the same thing shot by shot; the recording
 script is in [docs/video.md](docs/video.md).
 

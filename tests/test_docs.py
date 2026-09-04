@@ -152,3 +152,39 @@ class TestTheTeleprompterSurvivesTheConsole(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTheCommittedReportAndTheReadmeAgree(unittest.TestCase):
+    """The README describes a committed run by its numbers, which is the one
+    thing this module exists to forbid — unless the numbers are read off the
+    run itself. Regenerate `docs/sample_report_dgac.html` against a different
+    document, or on a day the model proposes differently, and this fails until
+    the prose is corrected. That is the whole point: the sixth stale count in
+    this repository should not be one a test could have caught.
+    """
+
+    RAPPORT = RACINE / "docs" / "sample_report_dgac.html"
+    LISEZMOI = RACINE / "README.md"
+
+    def _verdict(self) -> tuple[int, int, int]:
+        html = self.RAPPORT.read_text(encoding="utf-8")
+        trouve = re.search(
+            r"(\d+) obligations[^<]*?(\d+) covered[^<]*?(\d+) missing", html)
+        self.assertIsNotNone(
+            trouve, "the committed report no longer carries a verdict line")
+        return tuple(int(nombre) for nombre in trouve.groups())
+
+    def test_the_readme_quotes_the_report_it_points_at(self):
+        obligations, couvertes, manquantes = self._verdict()
+        attendu = f"{obligations} obligations, {couvertes} covered, {manquantes} missing"
+        self.assertIn(
+            attendu, self.LISEZMOI.read_text(encoding="utf-8"),
+            f"the committed report says {attendu!r} and the README does not")
+
+    def test_the_report_is_self_contained(self):
+        """It is offered as something a reader opens from disk. A stylesheet or
+        a script fetched from elsewhere would render it blank there, and the
+        offer would be worse than making none."""
+        html = self.RAPPORT.read_text(encoding="utf-8")
+        for interdit in ("<script", "<link", "src=\"http"):
+            self.assertNotIn(interdit, html.lower())
