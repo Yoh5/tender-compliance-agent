@@ -188,3 +188,27 @@ class TestTheCommittedReportAndTheReadmeAgree(unittest.TestCase):
         html = self.RAPPORT.read_text(encoding="utf-8")
         for interdit in ("<script", "<link", "src=\"http"):
             self.assertNotIn(interdit, html.lower())
+
+
+class TestTheModuleTableIsComplete(unittest.TestCase):
+    """A module absent from the table is a module a reader never learns exists.
+
+    `english.py` and `tools.py` were both missing while both were finished and
+    tested — the table was written once and the package kept growing. The list
+    of modules is a property of the package, so it is read off the package.
+    """
+
+    PAQUET = RACINE / "tender_compliance"
+    LISEZMOI = RACINE / "README.md"
+
+    def test_every_module_has_a_row(self):
+        sur_le_disque = {
+            chemin.name for chemin in self.PAQUET.glob("*.py")
+            if chemin.name != "__init__.py"
+        }
+        cites = set(re.findall(
+            r"^\| `([a-z_]+\.py)`", self.LISEZMOI.read_text(encoding="utf-8"),
+            flags=re.MULTILINE))
+        self.assertEqual(
+            sur_le_disque - cites, set(),
+            "these modules exist and the README's table does not mention them")
