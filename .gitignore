@@ -29,5 +29,10 @@ samples/private/
 # Derived from those PDFs in one command; not worth versioning.
 samples/real_dce/*.txt
 
+# Rendered from architecture.svg by scripts/make_deck.py, and embedded in the
+# deck. Two copies of one diagram drift, and the one that drifts is the one
+# nobody opens — so only the SVG is versioned.
+docs/architecture.png
+
 # Generated reports
 out/

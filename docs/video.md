@@ -33,8 +33,11 @@ Track: **Professional Agents**.
 - [ ] `out/` is empty, so the report is produced on camera.
 - [ ] Terminal at a size where a full row fits on one line without wrapping.
 - [ ] Close anything that might notify. A Slack popup on take six is take seven.
-- [ ] Slides ready for beats 1, 2, 3, 4, 9 and 10 — everything that is not a
-      screen recording.
+- [ ] `docs/deck.pptx` open, or exported to PDF. It carries beats 1 to 5 and 8
+      to 11, and a marked placeholder for each of the two live runs — cut those
+      two slides in the edit, they exist so the running order survives
+      rehearsal. Every spoken line is in the presenter notes of its slide.
+      Rebuild it with `python scripts/make_deck.py` if a figure changes.
 
 **Timings measured on 2026-09-03/04.** They depend on the model, the file and
 the connection, so time your own dry run rather than trusting these:
