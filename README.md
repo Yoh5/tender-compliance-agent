@@ -2,6 +2,12 @@
 
 **Public bids are rejected on paperwork before anyone reads them. This agent finds the gaps first.**
 
+<p align="center">
+  <img src="docs/image_tdca.jpg"
+       alt="A human hand and a robotic hand meeting over a compliance diagram"
+       width="640">
+</p>
+
 Built for the [Agents for Humans](https://agentsforhumans.devpost.com) hackathon — Professional Agent track.
 
 ---
