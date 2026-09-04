@@ -1,6 +1,11 @@
-"""Run one consultation file against one evidence library, from the shell.
+"""Run consultation files against one evidence library, from the shell.
 
     python -m tender_compliance samples/real_dce/rc_ANTAI_2026.pdf
+    python -m tender_compliance samples/real_dce --html-dir out
+
+A folder or a wildcard analyses every consultation file it holds, one at a time
+and each against its own matrix. Nothing is pooled: four tenders have four
+deadlines and four sets of obligations, and a combined count would mean nothing.
 
 This is the only place that reads `.env`, builds a model and spends money. Every
 module underneath takes its model as a parameter, so this file is the whole
@@ -78,19 +83,43 @@ def render(analysis) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="tender_compliance", description=__doc__)
-    parser.add_argument("pdf", help="the consultation file to read")
+    parser.add_argument("pdf", nargs="+",
+                        help="the consultation file(s) to read — a file, a folder "
+                             "whose PDFs are all analysed, or a wildcard")
     parser.add_argument("--library", default=str(ROOT / "samples" / "evidence_library.json"))
     parser.add_argument("--deadline", default=None,
-                        help="ISO date bids are due; defaults to the library's own")
+                        help="ISO date bids are due; defaults to the library's own. "
+                             "One deadline for the whole run: analysing several "
+                             "tenders with different deadlines needs several runs")
     parser.add_argument("--today", default=None, help="ISO date to assess against")
     parser.add_argument("--pages", default=None,
-                        help="limit to a page range, e.g. 11-15 (for a quick look)")
+                        help="limit to a page range, e.g. 11-15 (for a quick look). "
+                             "Applies to every document in the run")
     parser.add_argument("--html", default=None,
-                        help="also write a self-contained HTML report to this path")
+                        help="also write a self-contained HTML report to this path "
+                             "(one document only)")
+    parser.add_argument("--html-dir", default=None,
+                        help="write one HTML report per document into this folder, "
+                             "named after the document")
     parser.add_argument("--no-gloss", action="store_true",
                         help="skip the English translation of each requirement "
                              "(one extra model call per 20 rows)")
     args = parser.parse_args(argv)
+
+    from tender_compliance.batch import destinations, each, summary, targets
+
+    try:
+        documents = targets(args.pdf)
+    except ValueError as error:
+        print(f"cannot start: {error}", file=sys.stderr)
+        return 2
+
+    if args.html and len(documents) > 1:
+        # Quatre analyses dans un seul fichier : trois disparaissent, et le
+        # fichier restant a l'air d'etre tout le resultat.
+        print(f"--html names one file and this run has {len(documents)} documents; "
+              f"use --html-dir instead", file=sys.stderr)
+        return 2
 
     load_env()
 
@@ -98,7 +127,6 @@ def main(argv: list[str] | None = None) -> int:
     from tender_compliance.library import load, profile
     from tender_compliance.model import ConfigurationError, build, choose
     from tender_compliance.tender import (
-        ReportError,
         analyse,
         evidence_proposer,
         obligation_proposer,
@@ -109,13 +137,6 @@ def main(argv: list[str] | None = None) -> int:
     except ConfigurationError as error:
         print(f"cannot start: {error}", file=sys.stderr)
         return 2
-
-    source = read(args.pdf)
-    if args.pages:
-        first, _, last = args.pages.partition("-")
-        low, high = int(first), int(last or first)
-        source = Source(path=source.path,
-                        pages=[p for p in source.pages if low <= p.number <= high])
 
     library, library_deadline = load(args.library)
     company = profile(args.library)
@@ -137,10 +158,23 @@ def main(argv: list[str] | None = None) -> int:
         # with the other's ground truth.
         return Agent(model=model, tools=list(tools or []), callback_handler=None)
 
-    print(f"reading {source.path.name} ({len(source.pages)} pages) with "
-          f"{choice.describe()} …", file=sys.stderr)
+    sorties = destinations(documents, Path(args.html_dir)) if args.html_dir else {}
+    if args.html_dir:
+        Path(args.html_dir).mkdir(parents=True, exist_ok=True)
 
-    try:
+    def run(pdf: Path):
+        """One document, start to finish. Raising here loses this document and
+        no other — `each` reports it and moves on to the next."""
+        source = read(str(pdf))
+        if args.pages:
+            first, _, last = args.pages.partition("-")
+            low, high = int(first), int(last or first)
+            source = Source(path=source.path,
+                            pages=[p for p in source.pages if low <= p.number <= high])
+
+        print(f"reading {source.path.name} ({len(source.pages)} pages) with "
+              f"{choice.describe()} …", file=sys.stderr)
+
         analysis = analyse(
             source, library, deadline, today=today,
             propose_obligations=obligation_proposer(agent_factory),
@@ -148,33 +182,44 @@ def main(argv: list[str] | None = None) -> int:
             model=choice.describe(),
             company=company,
         )
-    except ReportError as error:
-        print(str(error), file=sys.stderr)
-        return 1
 
-    if not args.no_gloss:
-        # Apres coup, et seulement apres : `analyse` a deja rendu tous ses
-        # verdicts. Une traduction qui n'arrive pas laisse le rapport intact —
-        # `attach` rend les lignes qu'on lui a donnees.
-        from dataclasses import replace
+        if not args.no_gloss:
+            # Apres coup, et seulement apres : `analyse` a deja rendu tous ses
+            # verdicts. Une traduction qui n'arrive pas laisse le rapport intact —
+            # `attach` rend les lignes qu'on lui a donnees.
+            from dataclasses import replace
 
-        from tender_compliance.english import attach, translator
+            from tender_compliance.english import attach, translator
 
-        analysis = replace(
-            analysis, rows=attach(analysis.rows, translator(agent_factory)))
+            analysis = replace(
+                analysis, rows=attach(analysis.rows, translator(agent_factory)))
 
-    print(render(analysis))
+        print(render(analysis))
 
-    if args.html:
-        from tender_compliance.report import render as render_html
+        destination = Path(args.html) if args.html else sorties.get(pdf)
+        if destination:
+            from tender_compliance.report import render as render_html
 
-        destination = Path(args.html)
-        destination.write_text(render_html(analysis, today=today), encoding="utf-8")
-        # To stderr: stdout is the report, and a caller piping it should not
-        # have to strip a progress line out of the middle.
-        print(f"wrote {destination}", file=sys.stderr)
+            destination.write_text(render_html(analysis, today=today), encoding="utf-8")
+            # To stderr: stdout is the report, and a caller piping it should not
+            # have to strip a progress line out of the middle.
+            print(f"wrote {destination}", file=sys.stderr)
 
-    return 0
+        return analysis
+
+    def announce(rank: int, total: int, pdf: Path) -> None:
+        if total > 1:
+            print(f"\n{'═' * 72}\n[{rank}/{total}] {pdf.name}\n{'═' * 72}")
+
+    outcomes = each(documents, run, announce=announce)
+
+    if len(outcomes) > 1:
+        print(summary(outcomes))
+    for outcome in outcomes:
+        if not outcome.analysed:
+            print(f"{outcome.path}: {outcome.error}", file=sys.stderr)
+
+    return 0 if all(outcome.analysed for outcome in outcomes) else 1
 
 
 if __name__ == "__main__":
