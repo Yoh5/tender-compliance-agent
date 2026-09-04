@@ -36,3 +36,6 @@ docs/architecture.png
 
 # Generated reports
 out/
+
+# Fichiers de verrouillage Office, crees quand le deck est ouvert.
+~$*
